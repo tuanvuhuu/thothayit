@@ -1,0 +1,4318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hành Trình Kỹ Sư IT 3D — Hạ Tầng, Bảo Mật (Security) & Chính Sách (Policy)</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+  <style>
+    /* ==========================================================================
+       GIAO DIỆN ĐỒ HỌA 3D SÁNG SỦA, HIỆN ĐẠI (TECH CAMPUS - INFRA, SECURITY & POLICY)
+       Ưu tiên màn hình dọc điện thoại, tương thích hoàn hảo trên máy tính
+       ========================================================================== */
+    :root {
+      --bg-card-top: #ffffff;
+      --bg-card-bot: #eaf4ff;
+      --border-tech-blue: #38bdf8;
+      --border-tech-deep: #0284c7;
+      --shadow-3d-blue: #0369a1;
+      --text-navy: #0f172a;
+      --text-slate: #334155;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-indigo: #6366f1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #bae6fd;
+      color: var(--text-navy);
+      touch-action: none;
+    }
+
+    #game-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    canvas#three-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Lớp bong bóng chia sẻ kiến thức Hạ tầng, Security, Policy của đồng nghiệp AI */
+    #ai-bubbles-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+      overflow: hidden;
+    }
+
+    .ai-bubble {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 100%);
+      color: #0f172a;
+      padding: 6px 12px;
+      border-radius: 16px;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 4px 0 #0284c7, 0 8px 18px rgba(15, 23, 42, 0.18);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.2s ease;
+    }
+
+    .ai-bubble::after {
+      content: "";
+      position: absolute;
+      bottom: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 7px 6px 0;
+      border-style: solid;
+      border-color: #38bdf8 transparent transparent;
+    }
+
+    /* Nhãn trạm nhiệm vụ 3D nổi sáng rõ */
+    .zone-label-3d {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(224, 242, 254, 0.96) 100%);
+      color: #0369a1;
+      padding: 4px 11px;
+      border-radius: 999px;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 3px 0 #0284c7, 0 6px 14px rgba(15, 23, 42, 0.2);
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* Giao diện HUD 3D nổi sáng sủa */
+    #hud-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: env(safe-area-inset-top, 10px) 12px env(safe-area-inset-bottom, 14px) 12px;
+      perspective: 950px;
+    }
+
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .plaque-3d {
+      pointer-events: auto;
+      background: linear-gradient(180deg, var(--bg-card-top) 0%, var(--bg-card-bot) 100%);
+      border: 2.5px solid var(--border-tech-blue);
+      border-radius: 16px;
+      padding: 9px 14px;
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 1),
+        0 5px 0 var(--shadow-3d-blue),
+        0 10px 22px rgba(15, 23, 42, 0.22);
+      transform: rotateX(3deg);
+      transform-style: preserve-3d;
+      backdrop-filter: blur(8px);
+    }
+
+    .counter-badge {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-width: 58vw;
+    }
+
+    .counter-badge .temple-title {
+      font-size: 13.5px;
+      font-weight: 900;
+      color: #0369a1;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .counter-badge .visitor-line {
+      font-size: 11.5px;
+      color: var(--text-navy);
+      line-height: 1.3;
+    }
+
+    .counter-badge .visitor-line strong {
+      color: #059669;
+      font-weight: 800;
+    }
+
+    .counter-badge .mini-stats {
+      font-size: 11px;
+      color: var(--text-slate);
+      margin-top: 2px;
+      font-weight: 700;
+    }
+
+    .hud-actions-right {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    /* Nút bấm 3D nổi hiện đại */
+    .btn-3d {
+      pointer-events: auto;
+      cursor: pointer;
+      border: 2px solid #38bdf8;
+      background: linear-gradient(180deg, #ffffff 0%, #e0f2fe 100%);
+      color: var(--text-navy);
+      font-weight: 800;
+      font-size: 12.5px;
+      padding: 7px 12px;
+      border-radius: 13px;
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.95),
+        0 5px 0 #0284c7,
+        0 8px 16px rgba(15, 23, 42, 0.18);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .btn-3d:hover {
+      filter: brightness(1.04);
+    }
+
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 1px 0 #0284c7,
+        0 3px 8px rgba(15, 23, 42, 0.2);
+    }
+
+    .btn-3d.gold {
+      background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%);
+      color: #1e293b;
+      border-color: #fef08a;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.85),
+        0 6px 0 #b45309,
+        0 10px 22px rgba(180, 83, 9, 0.28);
+    }
+
+    .btn-3d.gold:active {
+      transform: translateY(4px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 2px 0 #b45309,
+        0 4px 10px rgba(180, 83, 9, 0.28);
+    }
+
+    .btn-3d.crimson {
+      background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+      color: #ffffff;
+      border-color: #a7f3d0;
+      text-shadow: 0 1px 2px rgba(6, 78, 59, 0.5);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.45),
+        0 5px 0 #065f46,
+        0 10px 18px rgba(6, 95, 70, 0.28);
+    }
+
+    .btn-3d.crimson:active {
+      transform: translateY(4px);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 1px 0 #065f46,
+        0 4px 10px rgba(6, 95, 70, 0.28);
+    }
+
+    /* Thanh đi nhanh tới 5 trạm nhiệm vụ & Thanh cử chỉ kỹ sư */
+    .quick-nav-bar {
+      pointer-events: auto;
+      align-self: center;
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    .chip-nav {
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(224, 242, 254, 0.95) 100%);
+      border: 1.5px solid #0ea5e9;
+      color: #0f172a;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 5px 10px;
+      border-radius: 999px;
+      box-shadow: 0 3px 0 #0284c7, 0 4px 10px rgba(15, 23, 42, 0.14);
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+
+    .chip-nav:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #0284c7;
+    }
+
+    .emote-bar {
+      pointer-events: auto;
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 5px;
+      flex-wrap: wrap;
+    }
+
+    .btn-emote {
+      cursor: pointer;
+      background: linear-gradient(180deg, #ffffff 0%, #ede9fe 100%);
+      border: 1.5px solid #8b5cf6;
+      color: #4c1d95;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      box-shadow: 0 3px 0 #6d28d9, 0 4px 10px rgba(15, 23, 42, 0.12);
+      transition: transform 0.1s ease;
+    }
+
+    .btn-emote:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #6d28d9;
+    }
+
+    /* Khu vực điều khiển phía dưới */
+    .hud-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      min-height: 130px;
+      position: relative;
+    }
+
+    /* Cần điều khiển ảo góc trái */
+    #joystick-zone {
+      pointer-events: auto;
+      width: 118px;
+      height: 118px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.72) 0%, rgba(186, 230, 253, 0.85) 100%);
+      border: 3px solid #38bdf8;
+      box-shadow:
+        inset 0 3px 8px rgba(2, 132, 199, 0.2),
+        0 6px 0 #0284c7,
+        0 10px 22px rgba(15, 23, 42, 0.24);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+    }
+
+    #joystick-knob {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #38bdf8 65%, #0284c7 100%);
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 5px 12px rgba(2, 132, 199, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+      position: absolute;
+      transform: translate(0px, 0px);
+      pointer-events: none;
+    }
+
+    #joystick-hint {
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 800;
+      color: #0f172a;
+      background: rgba(255, 255, 255, 0.82);
+      padding: 1px 7px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+
+    #action-prompt-wrap {
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    #btn-proximity-action {
+      pointer-events: auto;
+      font-size: 16px;
+      padding: 14px 22px;
+      border-radius: 18px;
+      animation: pulseAction3D 1.5s infinite ease-in-out;
+      display: none;
+    }
+
+    @keyframes pulseAction3D {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.05) translateY(-3px); }
+    }
+
+    .camera-hint-pill {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1.5px solid #38bdf8;
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-navy);
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.15);
+    }
+
+    /* Lớp phủ Modal 3D sáng rõ */
+    .overlay-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.35) 0%, rgba(15, 23, 42, 0.65) 100%);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      perspective: 1000px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .card-3d-modal {
+      width: 100%;
+      max-width: 470px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+      border: 3px solid #38bdf8;
+      border-radius: 24px;
+      padding: 18px 16px;
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 1),
+        0 10px 0 #0284c7,
+        0 22px 45px rgba(15, 23, 42, 0.45);
+      transform: rotateX(2deg);
+      color: var(--text-navy);
+      position: relative;
+    }
+
+    .modal-header-ornament {
+      text-align: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px dashed rgba(14, 165, 233, 0.35);
+    }
+
+    .modal-header-ornament .sub-tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: #0284c7;
+      font-weight: 800;
+    }
+
+    .modal-header-ornament h2 {
+      font-size: 21px;
+      color: #0f172a;
+      margin-top: 3px;
+      font-weight: 900;
+    }
+
+    .input-3d {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 13px;
+      border: 2px solid #7dd3fc;
+      background: #ffffff;
+      color: var(--text-navy);
+      font-size: 14.5px;
+      font-weight: 600;
+      box-shadow: inset 0 2px 5px rgba(15, 23, 42, 0.06);
+      outline: none;
+    }
+
+    .input-3d:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.3);
+    }
+
+    .field-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--text-slate);
+      margin-bottom: 6px;
+    }
+
+    /* Hướng dẫn 3 bước lần đầu */
+    #tutorial-banner {
+      position: fixed;
+      top: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: calc(100% - 24px);
+      max-width: 435px;
+      background: linear-gradient(180deg, #ffffff 0%, #e0f2fe 100%);
+      border: 2.5px solid #0ea5e9;
+      border-radius: 18px;
+      padding: 12px 14px;
+      box-shadow: 0 7px 0 #0284c7, 0 14px 28px rgba(15, 23, 42, 0.3);
+      color: var(--text-navy);
+    }
+
+    .tutorial-steps {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin: 8px 0 10px;
+    }
+
+    .tut-step {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1.5px solid #7dd3fc;
+      border-radius: 10px;
+      padding: 7px 6px;
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--text-slate);
+      font-weight: 600;
+    }
+
+    .tut-step.active {
+      border-color: #0284c7;
+      background: linear-gradient(180deg, #fef08a 0%, #facc15 100%);
+      color: #0f172a;
+      font-weight: 800;
+    }
+
+    /* Khung nhiệm vụ tương tác */
+    .activity-stage-box {
+      background: radial-gradient(circle at center, #ffffff 0%, #e0f2fe 100%);
+      border: 2px solid #7dd3fc;
+      border-radius: 18px;
+      padding: 14px;
+      margin: 10px 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 2px 8px rgba(2, 132, 199, 0.08);
+    }
+
+    .rhythm-arena {
+      width: 184px;
+      height: 184px;
+      margin: 6px auto 10px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rhythm-target-ring {
+      position: absolute;
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 4px solid #10b981;
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.55), inset 0 0 12px rgba(16, 185, 129, 0.25);
+      pointer-events: none;
+    }
+
+    .rhythm-shrinking-ring {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 4px solid #0ea5e9;
+      box-shadow: 0 0 14px rgba(14, 165, 233, 0.55);
+      pointer-events: none;
+    }
+
+    .rhythm-center-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #38bdf8 70%, #0284c7 100%);
+      border: 3px solid #ffffff;
+      box-shadow: 0 6px 0 #0369a1, 0 10px 20px rgba(2, 132, 199, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      cursor: pointer;
+      transition: transform 0.08s ease;
+    }
+
+    .rhythm-center-icon:active {
+      transform: scale(0.92) translateY(3px);
+    }
+
+    .feedback-pill {
+      display: inline-block;
+      min-height: 28px;
+      padding: 5px 15px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+      background: #ffffff;
+      border: 1.5px solid #38bdf8;
+      color: #0369a1;
+      margin-top: 4px;
+    }
+
+    .wish-preset-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0 10px;
+    }
+
+    .wish-chip {
+      cursor: pointer;
+      background: #f0f9ff;
+      border: 1.5px solid #38bdf8;
+      color: var(--text-navy);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .wish-chip:hover {
+      background: #bae6fd;
+    }
+
+    .choice-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .choice-card-3d {
+      cursor: pointer;
+      padding: 11px 9px;
+      border-radius: 15px;
+      border: 2px solid #bae6fd;
+      background: #ffffff;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+
+    .choice-card-3d.selected {
+      border-color: #0284c7;
+      background: linear-gradient(180deg, #f0f9ff 0%, #bae6fd 100%);
+      box-shadow: 0 4px 0 #0284c7, 0 6px 14px rgba(2, 132, 199, 0.22);
+    }
+
+    /* Hộp Rút Thẻ Kinh Nghiệm IT 3D */
+    .fortune-tube-visual {
+      width: 96px;
+      height: 130px;
+      margin: 8px auto;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #38bdf8 0%, #0284c7 55%, #1d4ed8 100%);
+      border: 3px solid #ffffff;
+      box-shadow: 0 8px 0 #1e3a8a, 0 14px 24px rgba(15, 23, 42, 0.3);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+    }
+
+    .fortune-tube-visual.shaking {
+      animation: shakeTube 0.13s infinite alternate ease-in-out;
+    }
+
+    @keyframes shakeTube {
+      0% { transform: rotate(-10deg) translateY(-4px); }
+      100% { transform: rotate(10deg) translateY(4px); }
+    }
+
+    .fortune-scroll-box {
+      background: linear-gradient(180deg, #ffffff 0%, #ecfdf5 100%);
+      background-color: #ffffff;
+      color: #0f172a;
+      border: 2.5px solid #10b981;
+      border-radius: 14px;
+      padding: 13px;
+      margin-top: 10px;
+      box-shadow: 0 5px 14px rgba(16, 185, 129, 0.18);
+      text-align: center;
+    }
+
+    /* Kho Tri Thức (Infra, Security, Policy) & Quiz Thực Chiến */
+    .kb-tab-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .kb-tab-btn {
+      flex: 1;
+      min-width: 95px;
+      cursor: pointer;
+      padding: 8px 8px;
+      border-radius: 12px;
+      border: 2px solid #bae6fd;
+      background: #ffffff;
+      color: var(--text-slate);
+      font-size: 11.5px;
+      font-weight: 800;
+      text-align: center;
+      box-shadow: 0 3px 0 #94a3b8;
+    }
+
+    .kb-tab-btn.active {
+      border-color: #0284c7;
+      background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
+      color: #0369a1;
+      box-shadow: 0 3px 0 #0284c7;
+    }
+
+    .kb-card-item {
+      background: #ffffff;
+      border: 1.5px solid #bae6fd;
+      border-left: 5px solid #0284c7;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      text-align: left;
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
+    }
+
+    .kb-card-item h4 {
+      font-size: 13px;
+      color: #0369a1;
+      margin-bottom: 4px;
+      font-weight: 800;
+    }
+
+    .kb-card-item p {
+      font-size: 12px;
+      color: var(--text-slate);
+      line-height: 1.45;
+      font-weight: 600;
+    }
+
+    .quiz-option-btn {
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      background: #ffffff;
+      border: 2px solid #bae6fd;
+      border-radius: 12px;
+      padding: 9px 12px;
+      margin-top: 7px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-navy);
+      transition: all 0.15s ease;
+    }
+
+    .quiz-option-btn:hover {
+      background: #f0f9ff;
+      border-color: #38bdf8;
+    }
+
+    .quiz-option-btn.correct {
+      background: #d1fae5;
+      border-color: #10b981;
+      color: #065f46;
+    }
+
+    .quiz-option-btn.wrong {
+      background: #fee2e2;
+      border-color: #ef4444;
+      color: #991b1b;
+    }
+
+    /* Sổ tay kinh nghiệm */
+    .notebook-list {
+      max-height: 165px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1.5px solid #7dd3fc;
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 6px;
+      text-align: left;
+      font-size: 12.5px;
+      color: var(--text-navy);
+    }
+
+    .notebook-item {
+      padding: 6px 4px;
+      border-bottom: 1px dashed rgba(14, 165, 233, 0.3);
+      line-height: 1.4;
+      font-weight: 600;
+    }
+
+    .notebook-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Toast thông báo nổi */
+    #toast-message {
+      position: fixed;
+      bottom: 155px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      background: linear-gradient(180deg, #ffffff 0%, #e0f2fe 100%);
+      border: 2.5px solid #0284c7;
+      color: #0f172a;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 800;
+      box-shadow: 0 5px 0 #0369a1, 0 10px 24px rgba(15, 23, 42, 0.3);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .screen-bell-shake {
+      animation: bellScreenShake 0.45s ease-out;
+    }
+
+    @keyframes bellScreenShake {
+      0% { transform: translate(0, 0); }
+      20% { transform: translate(-4px, 3px); }
+      40% { transform: translate(4px, -3px); }
+      60% { transform: translate(-3px, -2px); }
+      80% { transform: translate(2px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @media (max-width: 520px) {
+      .counter-badge .temple-title { font-size: 12px; }
+      .counter-badge .visitor-line { font-size: 10.5px; }
+      .btn-3d { font-size: 11.5px; padding: 6px 9px; }
+      #joystick-zone { width: 104px; height: 104px; }
+      #joystick-knob { width: 44px; height: 44px; }
+      #btn-proximity-action { font-size: 14.5px; padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Khung cảnh 3D chính -->
+  <div id="game-container">
+    <canvas id="three-canvas"></canvas>
+  </div>
+
+  <!-- Lớp hiển thị bong bóng trao đổi chuyên môn (Infra, Security, Policy) của đồng nghiệp AI -->
+  <div id="ai-bubbles-layer"></div>
+
+  <!-- Giao diện HUD nổi 3D sáng sủa -->
+  <div id="hud-layer">
+    <div>
+      <div class="hud-top">
+        <div class="plaque-3d counter-badge">
+          <div class="temple-title">
+            🛡️ HỌC VIỆN TECHHUB 3D
+            <span id="sky-phase-label" style="font-size:10.5px;color:#0284c7;font-weight:700;">(Ban ngày năng động)</span>
+          </div>
+          <div class="visitor-line">Hôm nay có <strong id="visitor-count-num">142</strong> kỹ sư rèn luyện Hạ tầng, Security & Policy</div>
+          <div class="mini-stats">
+            👨‍💻 <span id="hud-player-name">Kỹ Sư</span> &bull; 🖧 Hạ tầng: <strong id="hud-incense-count">0</strong> &bull; 🧠 Điểm Kinh Nghiệm: <strong id="hud-taman-score">0</strong> XP
+          </div>
+        </div>
+
+        <div class="hud-actions-right">
+          <button id="btn-open-knowledge" class="btn-3d crimson" type="button" title="Kho Tri Thức Hạ tầng, Security, Policy & Tình huống thực chiến">📚 Kho Tri Thức & Quiz</button>
+          <button id="btn-cycle-sky" class="btn-3d" type="button" title="Đổi ánh sáng Sáng / Chiều / Đêm">☀️ Ánh sáng</button>
+          <button id="btn-toggle-audio" class="btn-3d" type="button" title="Bật / Tắt âm thanh">🔊 Âm thanh</button>
+          <button id="btn-open-notebook" class="btn-3d" type="button">📘 Sổ Kinh Nghiệm</button>
+          <button id="btn-open-share" class="btn-3d gold" type="button">✨ Chia sẻ</button>
+        </div>
+      </div>
+
+      <!-- Thanh di chuyển nhanh tới 5 trạm nhiệm vụ Hạ tầng, Security & Policy -->
+      <div class="quick-nav-bar" aria-label="Đi nhanh tới các khu vực">
+        <button class="chip-nav" type="button" data-goto="incense">🖧 Cụm Server Cloud</button>
+        <button class="chip-nav" type="button" data-goto="bell">🚀 Trạm CI/CD</button>
+        <button class="chip-nav" type="button" data-goto="chant">⌨️ Bàn Luyện Clean Code</button>
+        <button class="chip-nav" type="button" data-goto="wish">💡 Cây Tri Thức & Hồ Dữ Liệu</button>
+        <button class="chip-nav" type="button" data-goto="fortune">🎴 Cẩm Nang Mentor</button>
+      </div>
+
+      <!-- Thanh cử chỉ & biểu cảm chân thật của Kỹ sư IT -->
+      <div class="emote-bar" aria-label="Cử chỉ nhân vật">
+        <button class="btn-emote" type="button" data-emote="bow">🤝 Chào hỏi & Cảm ơn</button>
+        <button class="btn-emote" type="button" data-emote="wave">😊 Vẫy tay kết nối</button>
+        <button class="btn-emote" type="button" data-emote="meditate">💻 Ngồi đọc tài liệu</button>
+        <button class="btn-emote" type="button" data-emote="joy">🎉 Giải quyết xong bài toán!</button>
+      </div>
+    </div>
+
+    <!-- Hướng dẫn ngắn 3 bước lần đầu (có nút bỏ qua) -->
+    <div id="tutorial-banner" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:13px;color:#0369a1;">✨ Hướng dẫn rèn luyện Kỹ sư IT (3 bước)</strong>
+        <button id="btn-skip-tutorial" class="btn-3d" type="button" style="padding:3px 9px;font-size:11px;">Bỏ qua</button>
+      </div>
+      <div class="tutorial-steps">
+        <div id="tut-step-1" class="tut-step active">1. Di chuyển<br><span style="font-size:10px;opacity:0.85;">Cần gạt / WASD</span></div>
+        <div id="tut-step-2" class="tut-step">2. Tới trạm<br><span style="font-size:10px;opacity:0.85;">Vòng sáng nhiệm vụ</span></div>
+        <div id="tut-step-3" class="tut-step">3. Giải quyết<br><span style="font-size:10px;opacity:0.85;">Học Infra & Security</span></div>
+      </div>
+      <div id="tut-status-text" style="font-size:11.5px;color:var(--text-slate);text-align:center;font-weight:600;">
+        Dùng cần điều khiển góc trái (hoặc phím WASD / Mũi tên) để khám phá 5 trạm Hạ tầng, Bảo mật & Chính sách.
+      </div>
+    </div>
+
+    <!-- Khu vực điều khiển dưới cùng -->
+    <div id="hud-bottom" class="hud-bottom">
+      <div id="joystick-zone" aria-label="Cần điều khiển di chuyển">
+        <div id="joystick-knob"></div>
+        <div id="joystick-hint">Di chuyển (WASD / Kéo)</div>
+      </div>
+
+      <div id="action-prompt-wrap">
+        <button id="btn-proximity-action" class="btn-3d gold" type="button">🖧 Tối Ưu Server</button>
+        <div class="camera-hint-pill">Kéo màn hình để xoay góc nhìn 3D</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Màn hình chào "Hành Trình Kỹ Sư IT 3D" -->
+  <div id="welcome-modal" class="overlay-screen">
+    <div class="card-3d-modal" style="text-align:center;">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Không gian 3D Sáng Tạo &bull; Infrastructure &bull; Security &bull; Policy</div>
+        <h2 style="font-size:24px;margin-top:6px;">🛡️ Hành Trình Kỹ Sư IT 3D</h2>
+      </div>
+      <p style="font-size:13px;line-height:1.55;color:var(--text-slate);margin-bottom:14px;font-weight:600;">
+        Khám phá khuôn viên công nghệ 3D tươi sáng, cùng đồng nghiệp giải quyết các bài toán <strong>Cơ sở hạ tầng (HA, VPC, Load Balancing, Backup 3-2-1)</strong>, <strong>An toàn thông tin (Zero Trust, WAF, IAM, OWASP)</strong> và <strong>Chính sách vận hành (Least Privilege, Change Management, Incident Response)</strong>.
+      </p>
+
+      <div style="text-align:left;margin-bottom:16px;">
+        <label class="field-label" for="input-player-name">Tên Kỹ sư / Chuyên gia IT của bạn:</label>
+        <input id="input-player-name" class="input-3d" type="text" maxlength="28" placeholder="Ví dụ: Minh DevSecOps, An Cloud..." value="Kỹ Sư Minh An" />
+      </div>
+
+      <button id="btn-enter-temple" class="btn-3d gold" type="button" style="width:100%;font-size:17px;padding:13px 20px;">
+        🚀 Bắt Đầu Hành Trình (Bật Âm Thanh)
+      </button>
+
+      <p style="font-size:11px;color:var(--text-slate);margin-top:12px;font-weight:600;">
+        100% Giải quyết vấn đề & Học hỏi thực chiến &bull; Không thu thập dữ liệu
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal Nhiệm vụ 1: Thiết Kế Cơ Sở Hạ Tầng (HA, VPC Subnet, WAF & Backup 3-2-1) -->
+  <div id="modal-incense" class="overlay-screen hidden">
+    <div class="card-3d-modal">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Nhiệm Vụ Hạ Tầng & Mạng #1 &bull; Cloud Architecture</div>
+        <h2>🖧 Kiến Trúc Hạ Tầng & Phân Tách Mạng</h2>
+      </div>
+      <p style="font-size:12.5px;color:var(--text-slate);text-align:center;line-height:1.45;font-weight:600;">
+        Hệ thống cần vừa chịu tải cao vừa bảo vệ cơ sở dữ liệu trước truy cập trái phép. Hãy chọn kiến trúc triển khai cho cụm Server trung tâm:
+      </p>
+
+      <div class="choice-grid-2" style="margin-top:12px;">
+        <div id="choice-incense-1" class="choice-card-3d selected" data-sticks="1">
+          <div style="font-size:24px;">🛡️🖧</div>
+          <div style="font-weight:800;color:#0369a1;margin-top:4px;font-size:13px;">1 Cụm VPC + WAF + Cache</div>
+          <div style="font-size:11px;color:var(--text-slate);margin-top:3px;">Đặt Web ở Public Subnet có tường lửa WAF, tách Database vào Private Subnet nội bộ</div>
+        </div>
+        <div id="choice-incense-3" class="choice-card-3d" data-sticks="3">
+          <div style="font-size:24px;">🌐🖧🖧</div>
+          <div style="font-weight:800;color:#0369a1;margin-top:4px;font-size:13px;">3 Cụm Multi-AZ HA + Backup 3-2-1</div>
+          <div style="font-size:11px;color:var(--text-slate);margin-top:3px;">Cân bằng tải đa vùng (Multi-AZ), tự động chuyển đổi dự phòng (Failover) & sao lưu 3-2-1</div>
+        </div>
+      </div>
+
+      <div id="incense-progress-box" class="activity-stage-box hidden" style="text-align:left;">
+        <div style="font-size:13.5px;font-weight:800;color:#059669;text-align:center;" id="incense-status-title">Đã triển khai kiến trúc Hạ tầng chuẩn!</div>
+        <div style="font-size:11.5px;color:var(--text-navy);margin-top:6px;line-height:1.5;font-weight:600;">
+          &bull; <strong>Phân vùng mạng (Network Segmentation):</strong> Không bao giờ mở cổng Database trực tiếp ra Internet; chỉ cho phép App Server trong VPC kết nối qua Security Group.<br>
+          &bull; <strong>Chính sách Sao lưu 3-2-1:</strong> Giữ ít nhất <strong>3</strong> bản dữ liệu, trên <strong>2</strong> loại lưu trữ khác nhau và <strong>1</strong> bản ở vùng địa lý khác (Off-site) để tối ưu RPO/RTO.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="btn-close-incense" class="btn-3d" type="button" style="flex:1;">Đóng</button>
+        <button id="btn-do-incense" class="btn-3d gold" type="button" style="flex:2;">⚡ Triển Khai Giải Pháp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nhiệm vụ 2: Đồng Bộ Quy Trình DevSecOps & Kiểm Tra Policy CI/CD -->
+  <div id="modal-bell" class="overlay-screen hidden">
+    <div class="card-3d-modal">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Nhiệm Vụ DevSecOps #2 &bull; Security Gate & Policy</div>
+        <h2>🛡️ Đồng Bộ Cổng Bảo Mật CI/CD</h2>
+      </div>
+      <p style="font-size:12.5px;color:var(--text-slate);text-align:center;font-weight:600;">
+        Canh chạm đúng lúc vòng sáng hội tụ để duyệt qua 3 cổng kiểm soát an toàn trước khi phát hành:<br>
+        <strong>1. SAST & Secret Scan &rarr; 2. IAM Policy Check &rarr; 3. Canary Deploy</strong>
+      </p>
+
+      <div class="activity-stage-box">
+        <div style="font-size:12px;color:var(--text-slate);margin-bottom:4px;font-weight:700;">
+          Cổng bảo mật vượt qua: <strong id="bell-strike-count">0 / 3</strong>
+        </div>
+        <div class="rhythm-arena">
+          <div class="rhythm-target-ring"></div>
+          <div id="bell-shrinking-ring" class="rhythm-shrinking-ring"></div>
+          <button id="btn-strike-bell" class="rhythm-center-icon" type="button" aria-label="Duyệt cổng DevSecOps">🚀</button>
+        </div>
+        <div id="bell-feedback-text" class="feedback-pill">Canh vòng sáng khớp nhau rồi chạm 🛡️</div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="btn-reset-bell" class="btn-3d" type="button" style="flex:1;">Thực hành lại</button>
+        <button id="btn-close-bell" class="btn-3d gold" type="button" style="flex:1;">Hoàn tất</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nhiệm vụ 3: Luyện Clean Code, OWASP Security & Policy (30 giây) -->
+  <div id="modal-chant" class="overlay-screen hidden">
+    <div class="card-3d-modal">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Nhiệm Vụ Kỹ Thuật #3 &bull; Secure Coding & OWASP</div>
+        <h2>⌨️ Rèn Luyện Clean Code & Phòng Thủ OWASP</h2>
+      </div>
+      <p style="font-size:12.5px;color:var(--text-slate);text-align:center;font-weight:600;">
+        Gõ phím cơ theo nhịp vòng sáng trong <strong>30 giây</strong> để vừa tối ưu hiệu năng vừa rà soát lỗ hổng bảo mật (SQLi, XSS, হার্ডcode Secret, phân quyền IAM).
+      </p>
+
+      <div class="activity-stage-box">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;font-weight:700;color:var(--text-navy);">
+          <span>⏳ Thời gian: <strong id="chant-timer-num">30</strong>s</span>
+          <span>🧠 Điểm Kinh Nghiệm: <strong id="chant-live-score">0</strong> / 100 XP</span>
+        </div>
+
+        <div id="chant-verse-line" style="font-size:12px;font-style:italic;color:#0369a1;font-weight:700;min-height:34px;margin-bottom:4px;">
+          "Luôn dùng Parameterized Query để triệt tiêu hoàn toàn nguy cơ SQL Injection..."
+        </div>
+
+        <div class="rhythm-arena">
+          <div class="rhythm-target-ring"></div>
+          <div id="chant-shrinking-ring" class="rhythm-shrinking-ring"></div>
+          <button id="btn-tap-muyu" class="rhythm-center-icon" type="button" aria-label="Gõ phím rà soát bảo mật">⌨️</button>
+        </div>
+
+        <div id="chant-rating-pill" class="feedback-pill">Chạm "Bắt đầu 30s" hoặc nhấn ⌨️ để rà soát Code & Security</div>
+
+        <div id="chant-summary-box" class="hidden" style="margin-top:10px;padding:10px;background:#ecfdf5;border-radius:12px;border:2px solid #10b981;">
+          <div style="font-size:16px;font-weight:900;color:#047857;" id="chant-final-score-line">Điểm Kinh Nghiệm: 92 / 100 XP</div>
+          <div style="font-size:12.5px;color:var(--text-navy);margin-top:4px;font-weight:600;" id="chant-praise-line">Tuyệt vời! Mã nguồn vừa sạch chuẩn Clean Code vừa tuân thủ chặt chẽ chuẩn bảo mật OWASP.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="btn-start-chant" class="btn-3d crimson" type="button" style="flex:1;">▶️ Bắt đầu 30s</button>
+        <button id="btn-close-chant" class="btn-3d gold" type="button" style="flex:1;">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nhiệm vụ 4: Đóng Góp Chính Sách (Policy), Kiến Trúc Hạ Tầng & Bài Học Security -->
+  <div id="modal-wish" class="overlay-screen hidden">
+    <div class="card-3d-modal">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Nhiệm Vụ Quản Trị #4 &bull; Policy, Security & Infra</div>
+        <h2>📜 Đóng Góp Quy Chuẩn & Chính Sách IT</h2>
+      </div>
+
+      <label class="field-label" for="input-wish-text">
+        Viết một quy tắc Hạ tầng, Bảo mật (Security) hoặc Chính sách (Policy) bạn tâm đắc (tối đa 120 ký tự):
+      </label>
+      <textarea id="input-wish-text" class="input-3d" rows="3" maxlength="120" placeholder="Ví dụ: Áp dụng nguyên tắc Đặc quyền tối thiểu (Least Privilege) và bật xác thực đa yếu tố (MFA)..."></textarea>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-slate);margin-top:4px;font-weight:700;">
+        <span id="wish-filter-warning" style="color:#dc2626;"></span>
+        <span><strong id="wish-char-count">0</strong> / 120 ký tự</span>
+      </div>
+
+      <div class="wish-preset-row">
+        <button class="wish-chip" type="button" data-wish="Luôn phân tách hàm nhỏ rõ ràng và viết Unit Test để phát hiện lỗi sớm.">Kinh nghiệm Clean Code</button>
+        <button class="wish-chip" type="button" data-wish="Khi gặp bài toán khó, hãy vẽ sơ đồ luồng dữ liệu trước khi bắt tay vào viết code.">Kinh nghiệm Giải thuật</button>
+        <button class="wish-chip" type="button" data-wish="Chủ động lắng nghe và trao đổi tích cực trong lúc Code Review để cùng nhau tiến bộ.">Kinh nghiệm Teamwork</button>
+        <button class="wish-chip" type="button" data-wish="[Policy] Áp dụng nguyên tắc Đặc quyền tối thiểu (Least Privilege) và rà soát quyền truy cập IAM định kỳ.">📜 Policy: Least Privilege</button>
+        <button class="wish-chip" type="button" data-wish="[Security] Mô hình Zero Trust: Luôn xác thực MFA, mã hóa TLS 1.3 và lưu khóa bí mật trong Vault.">🛡️ Security: Zero Trust</button>
+        <button class="wish-chip" type="button" data-wish="[Infra] Thiết kế hạ tầng bằng mã (IaC), triển khai Multi-AZ và diễn tập khôi phục sau thảm họa (DR) định kỳ.">🖧 Infra: Multi-AZ & IaC</button>
+        <button class="wish-chip" type="button" data-wish="[Policy] Mọi thay đổi trên Production đều phải qua Change Management và có sẵn kịch bản Rollback an toàn.">📋 Policy: Change Mgmt</button>
+      </div>
+
+      <div class="field-label" style="margin-top:8px;">Chọn nơi lưu giữ quy chuẩn trong khuôn viên 3D:</div>
+      <div class="choice-grid-2">
+        <div id="choice-wish-ribbon" class="choice-card-3d selected" data-wish-type="ribbon">
+          <div style="font-size:24px;">🏷️🌳</div>
+          <div style="font-weight:800;color:#0369a1;font-size:13px;margin-top:3px;">Thẻ Quy Chuẩn Policy</div>
+          <div style="font-size:11px;color:var(--text-slate);">Đính lên Cây Tri Thức Số (Tech Tree)</div>
+        </div>
+        <div id="choice-wish-lantern" class="choice-card-3d" data-wish-type="lantern">
+          <div style="font-size:24px;">💎💧</div>
+          <div style="font-weight:800;color:#0369a1;font-size:13px;margin-top:3px;">Khối Dữ Liệu Mã Hóa</div>
+          <div style="font-size:11px;color:var(--text-slate);">Thả sáng trên Hồ Quang Học</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button id="btn-close-wish" class="btn-3d" type="button" style="flex:1;">Đóng</button>
+        <button id="btn-submit-wish" class="btn-3d gold" type="button" style="flex:2;">✨ Lưu Bài Học Kinh Nghiệm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Nhiệm vụ 5: Rút Thẻ Cẩm Nang Kỹ Sư IT (60 Thẻ Hạ tầng, Security, Policy & Code) -->
+  <div id="modal-fortune" class="overlay-screen hidden">
+    <div class="card-3d-modal">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Nhiệm Vụ Học Tập #5 &bull; 60 Thẻ Kiến Thức Thực Chiến</div>
+        <h2>🎴 Rút Thẻ Cẩm Nang Infra • Security • Policy</h2>
+      </div>
+      <p style="font-size:12.5px;color:var(--text-slate);text-align:center;font-weight:600;">
+        Chọn chủ đề bạn muốn trau dồi rồi <strong>lắc điện thoại hoặc chạm giữ nút Rút Thẻ</strong> để nhận một đúc kết chuyên sâu:
+      </p>
+
+      <div class="wish-preset-row" style="justify-content:center;margin-top:8px;">
+        <button class="wish-chip fortune-cat-btn" type="button" data-cat="all" style="background:#bae6fd;border-color:#0284c7;">🌟 Tất cả (60 thẻ)</button>
+        <button class="wish-chip fortune-cat-btn" type="button" data-cat="INFRA">🖧 Hạ tầng (Infra)</button>
+        <button class="wish-chip fortune-cat-btn" type="button" data-cat="SECURITY">🛡️ Bảo mật (Security)</button>
+        <button class="wish-chip fortune-cat-btn" type="button" data-cat="POLICY">📜 Chính sách (Policy)</button>
+      </div>
+
+      <div class="activity-stage-box">
+        <div id="fortune-tube-box" class="fortune-tube-visual">🎴</div>
+        <div style="width:75%;height:9px;background:#dbeafe;border-radius:99px;margin:8px auto;overflow:hidden;border:1.5px solid #38bdf8;">
+          <div id="fortune-shake-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#0ea5e9,#10b981);transition:width 0.08s linear;"></div>
+        </div>
+        <div id="fortune-status-hint" style="font-size:12px;color:var(--text-slate);font-weight:700;">
+          Chạm giữ nút bên dưới (hoặc nhấn 1 lần) để rút thẻ kiến thức
+        </div>
+
+        <div id="fortune-result-card" class="fortune-scroll-box hidden">
+          <div style="font-size:12px;font-weight:800;color:#047857;letter-spacing:0.5px;" id="fortune-stick-title">THẺ #01 &bull; [SECURITY] ZERO TRUST</div>
+          <div style="font-size:14px;font-weight:700;line-height:1.5;margin:8px 0;color:#0f172a;" id="fortune-blessing-text"></div>
+          <div style="font-size:11px;font-style:italic;color:#475569;margin-top:6px;border-top:1px solid rgba(16,185,129,0.25);padding-top:5px;">
+            * Mang tính giải trí & hệ thống hóa kiến thức Hạ tầng, Security, Policy thực tế.
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="btn-close-fortune" class="btn-3d" type="button" style="flex:1;">Đóng</button>
+        <button id="btn-hold-shake" class="btn-3d gold" type="button" style="flex:2;">🎴 Chạm Giữ Rút Thẻ</button>
+      </div>
+      <div style="text-align:center;font-size:11px;color:var(--text-slate);margin-top:8px;font-weight:600;">
+        📌 <strong>Mang tính giải trí & học tập</strong> &bull; 60 đúc kết Hạ tầng, An toàn thông tin & Chính sách IT
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Mới: Kho Tri Thức Chuyên Sâu (Infra • Security • Policy) & Thử Thách Tình Huống Thực Chiến -->
+  <div id="modal-knowledge" class="overlay-screen hidden">
+    <div class="card-3d-modal" style="max-width:510px;">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Thư Viện Kiến Trúc Hệ Thống &bull; Học Qua Tình Huống</div>
+        <h2>📚 Kho Tri Thức: Infra • Security • Policy</h2>
+      </div>
+
+      <div class="kb-tab-bar">
+        <button class="kb-tab-btn active" type="button" data-kbtab="infra">🖧 Hạ Tầng</button>
+        <button class="kb-tab-btn" type="button" data-kbtab="security">🛡️ Security</button>
+        <button class="kb-tab-btn" type="button" data-kbtab="policy">📜 Policy</button>
+        <button class="kb-tab-btn" type="button" data-kbtab="quiz">🎯 Giải Tình Huống</button>
+      </div>
+
+      <!-- Tab 1: Cơ sở hạ tầng (Infrastructure) -->
+      <div id="kb-panel-infra" class="kb-panel">
+        <div class="kb-card-item">
+          <h4>1. High Availability (HA) & Cân Bằng Tải (Load Balancing)</h4>
+          <p>Triển khai máy chủ trên nhiều vùng khả dụng (Multi-AZ) kết hợp Load Balancer (Layer 4/Layer 7) và Health Check tự động để loại bỏ điểm lỗi đơn lẻ (Single Point of Failure - SPOF).</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>2. Phân Tách Mạng VPC (Public vs Private Subnet)</h4>
+          <p>Chỉ đặt Load Balancer/Reverse Proxy ở Public Subnet; toàn bộ App Server và Database phải nằm trong Private Subnet (không có IP Public trực tiếp) và giao tiếp qua cổng NAT/Bastion được kiểm soát nghiêm ngặt.</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>3. Chiến Lược Sao Lưu 3-2-1 & Chỉ Số RPO / RTO</h4>
+          <p>Duy trì <strong>3</strong> bản dữ liệu, trên <strong>2</strong> phương tiện khác nhau, và <strong>1</strong> bản lưu khác vùng địa lý. Luôn đo lường <strong>RPO</strong> (lượng dữ liệu tối đa chấp nhận mất) và <strong>RTO</strong> (thời gian tối đa phải khôi phục xong hệ thống).</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>4. Infrastructure as Code (IaC) & Observability</h4>
+          <p>Quản lý hạ tầng bằng code (Terraform, Ansible) để đồng nhất môi trường Dev/Staging/Prod; giám sát toàn diện bằng 3 trụ cột: <strong>Metrics</strong> (số liệu), <strong>Logs</strong> (nhật ký) và <strong>Traces</strong> (vết lời gọi).</p>
+        </div>
+      </div>
+
+      <!-- Tab 2: An toàn thông tin (Security) -->
+      <div id="kb-panel-security" class="kb-panel hidden">
+        <div class="kb-card-item">
+          <h4>1. Kiến Trúc Zero Trust & Phòng Thủ Nhiều Lớp (Defense in Depth)</h4>
+          <p>Nguyên tắc <em>"Không mặc định tin cậy bất kỳ ai, luôn xác thực mọi truy cập"</em> (Never trust, always verify). Kết hợp nhiều lớp bảo vệ: Tường lửa WAF &rarr; Xác thực MFA &rarr; Phân quyền IAM &rarr; Mã hóa dữ liệu.</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>2. Mã Hóa Toàn Diện (In-Transit & At-Rest)</h4>
+          <p>Sử dụng chuẩn <strong>TLS 1.3 / HTTPS</strong> cho mọi luồng dữ liệu truyền qua mạng (In-Transit) và <strong>AES-256 / KMS</strong> cho ổ cứng, cơ sở dữ liệu và bản sao lưu (At-Rest).</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>3. Phòng Chống OWASP Top 10 & Quản Lý Khóa Bí Mật (Secrets)</h4>
+          <p>Chống SQL Injection bằng Parameterized Query, chống XSS bằng mã hóa đầu ra & CSP; tuyệt đối không lưu mật khẩu hay API Key trong mã nguồn Git mà phải quản lý qua <strong>Secret Manager / Vault</strong>.</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>4. Bảo Mật Chuỗi Cung Ứng & Container (DevSecOps)</h4>
+          <p>Tích hợp quét lỗ hổng thư viện (SCA), quét mã nguồn tĩnh (SAST) và chạy Container bằng tài khoản không có quyền root (Non-root user) trên Image tối giản.</p>
+        </div>
+      </div>
+
+      <!-- Tab 3: Chính sách & Quản trị (Policy & Governance) -->
+      <div id="kb-panel-policy" class="kb-panel hidden">
+        <div class="kb-card-item">
+          <h4>1. Nguyên Tắc Đặc Quyền Tối Thiểu (Principle of Least Privilege - PoLP)</h4>
+          <p>Mỗi nhân sự, dịch vụ hoặc ứng dụng chỉ được cấp đúng quyền hạn tối thiểu cần thiết để hoàn thành công việc trong thời gian ngắn nhất (Just-In-Time Access) và phải rà soát định kỳ (Access Review).</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>2. Chính Sách Phân Loại & Bảo Vệ Dữ Liệu (Data Classification Policy)</h4>
+          <p>Phân loại dữ liệu thành 4 mức: <strong>Public</strong> (Công khai), <strong>Internal</strong> (Nội bộ), <strong>Confidential</strong> (Mật) và <strong>Restricted</strong> (Tối mật / Dữ liệu cá nhân nhạy cảm PII) để áp dụng quy định ẩn danh (Masking) và kiểm toán truy cập (Audit Log).</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>3. Chính Sách Quản Lý Thay Đổi (Change Management Policy)</h4>
+          <p>Mọi bản cập nhật lên môi trường Production cần có hồ sơ thay đổi, được kiểm thử tự động, phê duyệt chéo (Peer Review / CAB) và bắt buộc đính kèm <strong>Kịch bản quay lui (Rollback Plan)</strong>.</p>
+        </div>
+        <div class="kb-card-item">
+          <h4>4. Quy Trình Ứng Phó Sự Cố & Blameless Post-Mortem</h4>
+          <p>Khi có sự cố: <em>Phát hiện &rarr; Cô lập vùng ảnh hưởng &rarr; Khôi phục dịch vụ &rarr; Họp rút kinh nghiệm không đổ lỗi (Blameless Post-Mortem)</em> để cải tiến quy trình và rào chắn kỹ thuật.</p>
+        </div>
+      </div>
+
+      <!-- Tab 4: Giải quyết tình huống thực chiến (+XP) -->
+      <div id="kb-panel-quiz" class="kb-panel hidden">
+        <div class="activity-stage-box" style="text-align:left;margin-top:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:11.5px;font-weight:800;color:#0284c7;" id="quiz-topic-badge">TÌNH HUỐNG #1 • SECURITY & POLICY</span>
+            <span style="font-size:11.5px;font-weight:800;color:#059669;">Thưởng: +10 XP</span>
+          </div>
+          <div style="font-size:13.5px;font-weight:800;color:var(--text-navy);line-height:1.45;margin-bottom:8px;" id="quiz-question-text"></div>
+          <div id="quiz-options-container"></div>
+          <div id="quiz-explanation-box" class="hidden" style="margin-top:10px;padding:10px;background:#ecfdf5;border:1.5px solid #10b981;border-radius:10px;font-size:12px;color:#065f46;font-weight:600;line-height:1.45;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <button id="btn-next-quiz" class="btn-3d crimson" type="button" style="width:100%;">➡️ Tình Huống Tiếp Theo</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="btn-close-knowledge" class="btn-3d gold" type="button" style="width:100%;">Đóng Kho Tri Thức</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Sổ Tay Kinh Nghiệm Của Tôi -->
+  <div id="modal-notebook" class="overlay-screen hidden">
+    <div class="card-3d-modal">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Hồ Sơ Kỹ Năng &bull; Lưu Trên Thiết Bị</div>
+        <h2>📘 Sổ Tay Kinh Nghiệm IT</h2>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <input id="input-notebook-name" class="input-3d" type="text" maxlength="28" style="padding:8px 12px;font-size:13.5px;" />
+        <button id="btn-save-name" class="btn-3d gold" type="button" style="white-space:nowrap;">Lưu tên</button>
+      </div>
+
+      <div class="choice-grid-2" style="margin-bottom:12px;">
+        <div class="choice-card-3d" style="cursor:default;">
+          <div style="font-size:11.5px;color:var(--text-slate);font-weight:700;">Cụm Hạ tầng đã tối ưu</div>
+          <div style="font-size:22px;font-weight:900;color:#0284c7;margin-top:2px;" id="nb-incense-count">0</div>
+        </div>
+        <div class="choice-card-3d" style="cursor:default;">
+          <div style="font-size:11.5px;color:var(--text-slate);font-weight:700;">Điểm Kinh Nghiệm cao nhất</div>
+          <div style="font-size:22px;font-weight:900;color:#059669;margin-top:2px;" id="nb-best-taman">0 / 100</div>
+        </div>
+      </div>
+
+      <div class="field-label">📜 Quy chuẩn Policy, Security & Hạ tầng đã đúc kết (<span id="nb-wishes-total">0</span>):</div>
+      <div id="nb-wishes-list" class="notebook-list"></div>
+
+      <div class="field-label" style="margin-top:10px;">🎴 Thẻ cẩm nang IT đã rút (<span id="nb-fortunes-total">0</span>):</div>
+      <div id="nb-fortunes-list" class="notebook-list"></div>
+
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button id="btn-close-notebook" class="btn-3d" type="button" style="flex:1;">Đóng</button>
+        <button id="btn-notebook-to-share" class="btn-3d gold" type="button" style="flex:1.4;">✨ Xuất Thẻ Hồ Sơ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Chia Sẻ Ảnh Dọc 1080×1350 -->
+  <div id="modal-share" class="overlay-screen hidden">
+    <div class="card-3d-modal" style="max-width:460px;">
+      <div class="modal-header-ornament">
+        <div class="sub-tag">Thẻ Hồ Sơ Kỹ Sư IT (1080 × 1350 px)</div>
+        <h2>✨ Chia Sẻ Hành Trình Học Tập</h2>
+      </div>
+
+      <div style="text-align:center;background:#f0f9ff;padding:10px;border-radius:14px;border:2px solid #38bdf8;">
+        <canvas id="share-card-canvas" width="1080" height="1350" style="width:100%;max-width:250px;height:auto;border-radius:10px;box-shadow:0 8px 20px rgba(15,23,42,0.25);"></canvas>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button id="btn-close-share" class="btn-3d" type="button" style="flex:1;">Đóng</button>
+        <button id="btn-download-share" class="btn-3d crimson" type="button" style="flex:1.3;">⬇️ Tải Ảnh Xuống</button>
+        <button id="btn-native-share" class="btn-3d gold" type="button" style="flex:1.4;">📤 Chia Sẻ Ngay</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast thông báo nổi -->
+  <div id="toast-message" class="hidden">Đã lưu vào Sổ tay kinh nghiệm</div>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    /* ==========================================================================
+       1. LƯU TRỮ DỮ LIỆU & 60 THẺ KIẾN THỨC (INFRASTRUCTURE, SECURITY, POLICY, CODE)
+       Kèm bộ câu hỏi Tình huống thực chiến giúp người chơi học qua giải quyết vấn đề
+       ========================================================================== */
+    const STORAGE_KEY = 'hanh_trinh_ky_su_it_save_v1';
+
+    const DEFAULT_SAVE = {
+      playerName: 'Kỹ Sư Minh An',
+      incenseCount: 0,
+      bestTamAn: 0,
+      wishes: [
+        {
+          text: '[Policy] Áp dụng nguyên tắc Đặc quyền tối thiểu (Least Privilege) và bật MFA cho toàn bộ tài khoản quản trị.',
+          type: 'ribbon',
+          time: 'Hôm nay'
+        }
+      ],
+      fortunes: [],
+      tutorialDone: false
+    };
+
+    function loadSaveData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(DEFAULT_SAVE);
+        const parsed = JSON.parse(raw);
+        return {
+          playerName: parsed.playerName || DEFAULT_SAVE.playerName,
+          incenseCount: Number(parsed.incenseCount) || 0,
+          bestTamAn: Number(parsed.bestTamAn) || 0,
+          wishes: Array.isArray(parsed.wishes) && parsed.wishes.length ? parsed.wishes : structuredClone(DEFAULT_SAVE.wishes),
+          fortunes: Array.isArray(parsed.fortunes) ? parsed.fortunes : [],
+          tutorialDone: Boolean(parsed.tutorialDone)
+        };
+      } catch (err) {
+        return structuredClone(DEFAULT_SAVE);
+      }
+    }
+
+    function saveDataToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(saveState));
+      } catch (err) {
+        // Bỏ qua nếu trình duyệt chặn localStorage
+      }
+      updateHudStats();
+    }
+
+    const saveState = loadSaveData();
+    let visitorCounter = 148 + (saveState.incenseCount * 2);
+
+    const BAD_WORDS = [
+      'đụ', 'địt', 'lồn', 'cặc', 'đéo', 'vãi l', 'chó đẻ', 'ngu ngốc', 'khốn nạn',
+      'fuck', 'shit', 'bitch', 'đĩ', 'mẹ mày', 'cha mày', 'cứt', 'đái'
+    ];
+
+    function containsProfanity(str) {
+      const lower = str.toLowerCase();
+      return BAD_WORDS.some((w) => lower.includes(w));
+    }
+
+    // 60 Thẻ Cẩm Nang chuyên sâu: INFRASTRUCTURE (Hạ tầng), SECURITY (An toàn thông tin), POLICY (Chính sách & Quản trị)
+    const FORTUNE_BLESSINGS = [
+      // --- CƠ SỞ HẠ TẦNG (INFRASTRUCTURE) ---
+      { cat: 'INFRA', title: '[Hạ Tầng] Kiến Trúc Multi-AZ (Đa Vùng)', text: 'Triển khai ứng dụng và cơ sở dữ liệu trên ít nhất 2 vùng khả dụng (Availability Zones) độc lập giúp hệ thống vẫn hoạt động liên tục ngay cả khi một trung tâm dữ liệu gặp sự cố điện hoặc mạng.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Quy Tắc Sao Lưu 3-2-1', text: 'Luôn giữ ít nhất 3 bản dữ liệu, lưu trên 2 loại phương tiện lưu trữ khác nhau và có 1 bản đặt ở vùng địa lý tách biệt (Off-site/Cloud) để đảm bảo an toàn trước mọi rủi ro.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Phân Biệt RPO và RTO', text: 'RPO (Recovery Point Objective) là lượng dữ liệu tối đa chấp nhận mất tính theo thời gian; RTO (Recovery Time Objective) là thời gian tối đa hệ thống phải khôi phục xong sau sự cố.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Cân Bằng Tải Layer 4 vs Layer 7', text: 'Load Balancer Layer 4 định tuyến cực nhanh theo IP/Port (TCP/UDP), trong khi Layer 7 định tuyến thông minh theo nội dung HTTP Header, URL Path và hỗ trợ chấm dứt kết nối SSL (SSL Termination).' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Phân Tách Public & Private Subnet', text: 'Chỉ đặt Load Balancer hoặc Bastion Host ở Public Subnet; toàn bộ máy chủ ứng dụng (App Server) và cơ sở dữ liệu (Database) phải nằm trong Private Subnet không có IP Public.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Thiết Kế Dịch Vụ Stateless', text: 'Không lưu phiên đăng nhập (Session) trực tiếp trên ổ cứng từng Web Server mà lưu vào Redis/Database tập trung giúp hệ thống dễ dàng Auto-Scaling thêm hoặc bớt máy chủ.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Infrastructure as Code (IaC)', text: 'Định nghĩa toàn bộ mạng, máy chủ và tường lửa bằng mã nguồn (như Terraform, Ansible) giúp tái tạo môi trường chuẩn xác, tránh sai sót cấu hình thủ công (Configuration Drift).' },
+      { cat: 'INFRA', title: '[Hạ Tầng] 3 Trụ Cột Observability', text: 'Giám sát hệ thống hiện đại cần kết hợp đủ 3 yếu tố: Metrics (chỉ số CPU/RAM/Latency), Logs (nhật ký chi tiết sự kiện) và Distributed Traces (vết đường đi của request qua các Microservices).' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Chiến Lược Caching Đa Tầng', text: 'Kết hợp CDN ở biên mạng (Edge) cho tài nguyên tĩnh và Redis/Memcached cho kết quả truy vấn nóng giúp giảm tới 80% tải trọng trực tiếp lên cơ sở dữ liệu chính.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Read Replica Cho Cơ Sở Dữ Liệu', text: 'Với các hệ thống có lượng đọc lớn hơn ghi nhiều lần, hãy tách luồng ghi vào Primary DB và phân phối luồng đọc sang các cụm Read Replica.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Health Check & Self-Healing', text: 'Cấu hình Liveness Probe và Readiness Probe chuẩn xác trong Kubernetes/Load Balancer để hệ thống chỉ gửi lưu lượng vào các tiến trình đã sẵn sàng và tự khởi động lại container bị treo.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Triển Khai Blue-Green & Canary', text: 'Canary Deployment chuyển từ từ 5% -> 25% -> 100% người dùng sang phiên bản mới, giúp phát hiện sớm bất thường hiệu năng mà không ảnh hưởng toàn bộ khách hàng.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Giới Hạn Tài Nguyên (Resource Quotas)', text: 'Luôn cấu hình giới hạn CPU/Memory (Requests & Limits) cho từng dịch vụ/container để một tiến trình bị rò rỉ bộ nhớ không làm cạn kiệt tài nguyên của cả máy chủ vật lý.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Hàng Đợi Tin Nhắn (Message Queue)', text: 'Sử dụng hàng đợi bất đồng bộ (Kafka, RabbitMQ) cho các tác vụ nặng như gửi email, xuất báo cáo giúp hệ thống phản hồi người dùng tức thì và chịu được đỉnh tải đột biến.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Chỉ Số Cam Kết SLI, SLO và SLA', text: 'SLI là chỉ số đo thực tế (ví dụ độ trễ 99th < 200ms), SLO là mục tiêu kỹ thuật nội bộ (Uptime 99.95%), còn SLA là cam kết pháp lý với khách hàng (Uptime 99.9%).' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Quản Lý Kết Nối Connection Pooling', text: 'Sử dụng Connection Pool giúp tái sử dụng các kết nối cơ sở dữ liệu có sẵn thay vì đóng/mở kết nối TCP mới liên tục gây quá tải CPU trên Database Server.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Hạ Tầng Bất Biến (Immutable Infrastructure)', text: 'Khi nâng cấp phần mềm, thay vì vào sửa trực tiếp trên máy chủ đang chạy, hãy đóng gói Image mới đã kiểm thử và thay thế cụm máy ảo/container cũ.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Tối Ưu DNS & Anycast CDN', text: 'Cấu hình TTL hợp lý và dùng mạng phân phối nội dung (CDN) giúp người dùng tải tài nguyên từ máy chủ gần vị trí địa lý của họ nhất, giảm độ trễ mạng.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Kiểm Thử Chịu Tải (Load Testing)', text: 'Thực hiện kiểm thử tải định kỳ trong môi trường Staging để biết chính xác ngưỡng chịu đựng tối đa của hệ thống trước các sự kiện lớn.' },
+      { cat: 'INFRA', title: '[Hạ Tầng] Diễn Tập Khôi Phục Thảm Họa (DR Drill)', text: 'Một bản sao lưu chỉ thực sự có giá trị khi đã được thử nghiệm khôi phục thành công; hãy diễn tập quy trình Disaster Recovery định kỳ cùng đội ngũ.' },
+
+      // --- AN TOÀN THÔNG TIN (SECURITY) ---
+      { cat: 'SECURITY', title: '[Security] Triết Lý Zero Trust Architecture', text: 'Không bao giờ mặc định tin tưởng thiết bị chỉ vì nó đang ở trong mạng nội bộ (LAN/VPN); mọi yêu cầu đều phải được xác thực danh tính, kiểm tra thiết bị và phân quyền.' },
+      { cat: 'SECURITY', title: '[Security] Phòng Thủ Nhiều Lớp (Defense in Depth)', text: 'Xếp chồng nhiều lớp bảo vệ độc lập: Tường lửa mạng -> WAF -> Xác thực MFA -> Phân quyền ứng dụng -> Mã hóa Database, để nếu 1 lớp gặp sự cố thì các lớp sau vẫn chặn đứng rủi ro.' },
+      { cat: 'SECURITY', title: '[Security] Không Bao Giờ Hardcode Khóa Bí Mật', text: 'Tuyệt đối không lưu mật khẩu, Private Key hay API Token trong mã nguồn hoặc file cấu hình đẩy lên Git; hãy dùng Secret Manager / HashiCorp Vault và xoay vòng khóa định kỳ.' },
+      { cat: 'SECURITY', title: '[Security] Mã Hóa Dữ Liệu In-Transit & At-Rest', text: 'Bắt buộc dùng HTTPS / TLS 1.3 khi truyền dữ liệu qua mạng (In-Transit) và mã hóa AES-256 cho ổ đĩa, cơ sở dữ liệu và bản sao lưu (At-Rest).' },
+      { cat: 'SECURITY', title: '[Security] Phòng Chống SQL Injection Triệt Để', text: 'Luôn sử dụng Parameterized Queries (Prepared Statements) hoặc ORM an toàn; không bao giờ nối chuỗi trực tiếp từ dữ liệu người dùng nhập vào câu lệnh SQL.' },
+      { cat: 'SECURITY', title: '[Security] Phòng Chống Tấn Công XSS', text: 'Mã hóa dữ liệu đầu ra (Output Encoding) trước khi hiển thị lên trình duyệt và cấu hình chính sách Content-Security-Policy (CSP) để ngăn kịch bản độc hại thực thi.' },
+      { cat: 'SECURITY', title: '[Security] Bảo Vệ Phiên Đăng Nhập (Session Security)', text: 'Cấu hình Cookie phiên làm việc với đầy đủ cờ bảo mật: HttpOnly (chống JS đọc trộm), Secure (chỉ truyền qua HTTPS) và SameSite=Strict/Lax (chống CSRF).' },
+      { cat: 'SECURITY', title: '[Security] Xác Thực Đa Yếu Tố (MFA / 2FA)', text: 'Bật MFA (như khóa cứng FIDO2 hoặc ứng dụng OTP) giúp chặn đứng hơn 99% nguy cơ chiếm quyền tài khoản ngay cả khi mật khẩu bị lộ.' },
+      { cat: 'SECURITY', title: '[Security] Băm Mật Khẩu Bằng Argon2 / Bcrypt', text: 'Không bao giờ lưu mật khẩu dạng văn bản thuần hay băm MD5/SHA1 đơn giản; hãy dùng hàm băm chậm có Salt riêng biệt như Argon2id hoặc Bcrypt.' },
+      { cat: 'SECURITY', title: '[Security] Tường Lửa Ứng Dụng Web (WAF) & Rate Limit', text: 'Đặt WAF và bộ giới hạn tốc độ gọi API (Rate Limiting) ở cửa ngõ hệ thống để tự động lọc lưu lượng bất thường, chống vét cạn mật khẩu (Brute-force) và giảm thiểu DDoS.' },
+      { cat: 'SECURITY', title: '[Security] Quét Lỗ Hổng Thư Viện (SCA & SAST)', text: 'Tích hợp công cụ quét tự động vào CI/CD để phát hiện sớm các thư viện mã nguồn mở (npm, pip, maven) có cảnh báo lỗ hổng CVE trước khi đóng gói sản phẩm.' },
+      { cat: 'SECURITY', title: '[Security] Chống Lỗ Hổng IDOR (Broken Access Control)', text: 'Khi người dùng yêu cầu xem hoặc sửa một bản ghi theo ID, máy chủ bắt buộc phải kiểm tra xem tài khoản đang đăng nhập có quyền sở hữu bản ghi đó hay không.' },
+      { cat: 'SECURITY', title: '[Security] Bảo Mật Container (Non-Root User)', text: 'Luôn cấu hình Dockerfile chạy ứng dụng bằng tài khoản người dùng thường (Non-root), sử dụng Base Image tối giản (Alpine/Distroless) và chỉ mở đúng cổng cần thiết.' },
+      { cat: 'SECURITY', title: '[Security] Phòng Chống Lỗ Hổng SSRF', text: 'Khi hệ thống cần tải dữ liệu từ một URL do người dùng cung cấp, hãy kiểm tra danh sách trắng (Allowlist) tên miền và chặn mọi kết nối tới dải IP nội bộ (127.0.0.1, 169.254.169.254).' },
+      { cat: 'SECURITY', title: '[Security] Xác Thực Đầu Vào (Input Validation)', text: 'Kiểm tra chặt chẽ kiểu dữ liệu, độ dài, định dạng ngay tại tầng API Gateway và Backend theo danh sách cho phép (Allowlist) thay vì chỉ kiểm tra ở phía trình duyệt.' },
+      { cat: 'SECURITY', title: '[Security] Nhật Ký Kiểm Toán Bất Biến (Audit Logs)', text: 'Ghi nhận đầy đủ các hành động nhạy cảm (đăng nhập, đổi quyền, xuất dữ liệu) vào máy chủ Log tập trung chỉ cho phép ghi thêm (Append-only) để phục vụ điều tra an ninh.' },
+      { cat: 'SECURITY', title: '[Security] Phân Quyền Tối Thiểu Cho Security Group', text: 'Trong Cloud Firewall/Security Group, tuyệt đối tránh mở cổng quản trị (SSH 22, RDP 3389, DB 5432/3306) cho toàn cầu (0.0.0.0/0); chỉ cho phép từ dải IP VPN/Bastion.' },
+      { cat: 'SECURITY', title: '[Security] Bảo Vệ Khóa Ký Số & Chứng Chỉ SSL', text: 'Tự động hóa việc gia hạn chứng chỉ SSL/TLS trước khi hết hạn và lưu trữ khóa riêng tư (Private Key) trong mô-đun bảo mật phần cứng (HSM / Cloud KMS).' },
+      { cat: 'SECURITY', title: '[Security] Cảnh Giác Với Kỹ Nghệ Xã Hội (Phishing)', text: 'Luôn kiểm tra kỹ tên miền người gửi, đường dẫn xác thực và không bao giờ cung cấp mã OTP hay Token phiên làm việc qua tin nhắn.' },
+      { cat: 'SECURITY', title: '[Security] Ẩn Thông Tin Chi Tiết Lỗi Hệ Thống', text: 'Trên môi trường Production, chỉ trả về mã lỗi thân thiện cho người dùng và ghi Stack Trace chi tiết vào Log nội bộ để không làm lộ cấu trúc thư mục hay phiên bản phần mềm.' },
+
+      // --- CHÍNH SÁCH & QUẢN TRỊ (IT POLICY & GOVERNANCE) ---
+      { cat: 'POLICY', title: '[Policy] Nguyên Tắc Đặc Quyền Tối Thiểu (Least Privilege)', text: 'Chính sách IAM chuẩn yêu cầu mỗi cá nhân và dịch vụ chỉ được cấp đúng quyền hạn tối thiểu đủ để thực hiện nhiệm vụ, tránh cấp quyền Admin toàn hệ thống tràn lan.' },
+      { cat: 'POLICY', title: '[Policy] Phân Tách Nhiệm Vụ (Separation of Duties - SoD)', text: 'Người viết code phát triển tính năng và người phê duyệt triển khai lên môi trường Production hoặc kiểm toán bảo mật nên là hai cá nhân độc lập để đảm bảo tính minh bạch.' },
+      { cat: 'POLICY', title: '[Policy] Chính Sách Phân Loại Dữ Liệu (Data Classification)', text: 'Mỗi bảng dữ liệu và tài liệu cần được gắn nhãn rõ ràng (Công khai, Nội bộ, Mật, Tối mật/PII) để áp dụng đúng mức độ mã hóa, phân quyền và thời hạn lưu trữ.' },
+      { cat: 'POLICY', title: '[Policy] Quy Trình Quản Lý Thay Đổi (Change Management)', text: 'Mọi thay đổi cấu hình hạ tầng hoặc cập nhật phần mềm quan trọng đều phải có phiếu yêu cầu (RFC), đánh giá rủi ro, kế hoạch kiểm thử và phương án Rollback rõ ràng.' },
+      { cat: 'POLICY', title: '[Policy] Rà Soát Quyền Truy Cập Định Kỳ (Access Review)', text: 'Định kỳ hàng quý, quản trị viên cần rà soát và thu hồi ngay các tài khoản không còn sử dụng hoặc các quyền hạn tạm thời đã hết thời gian công tác.' },
+      { cat: 'POLICY', title: '[Policy] Họp Rút Kinh Nghiệm Không Đổ Lỗi (Blameless Post-Mortem)', text: 'Sau mỗi sự cố kỹ thuật, mục tiêu của cuộc họp phân tích là tìm ra điểm yếu trong quy trình và công cụ để khắc phục bền vững, chứ không phải quy trách nhiệm cá nhân.' },
+      { cat: 'POLICY', title: '[Policy] Chính Sách Quản Lý Bản Vá (Patch Management)', text: 'Thiết lập lịch trình cập nhật bản vá bảo mật định kỳ cho hệ điều hành, cơ sở dữ liệu và thư viện; các lỗ hổng mức Critical cần có quy trình vá khẩn cấp.' },
+      { cat: 'POLICY', title: '[Policy] Bảo Vệ Dữ Liệu Cá Nhân (Data Privacy & Masking)', text: 'Không bao giờ sao chép trực tiếp dữ liệu thật của khách hàng (PII) về môi trường Dev/Test; bắt buộc phải ẩn danh hóa (Data Masking/Anonymization) trước khi sử dụng.' },
+      { cat: 'POLICY', title: '[Policy] Quy Trình Thu Hồi Quyền Khi Chuyển Vị Trí (Offboarding)', text: 'Khi nhân sự chuyển bộ phận hoặc nghỉ việc, hệ thống SSO/IAM cần có quy trình tự động thu hồi quyền truy cập ngay lập tức để bảo vệ tài sản thông tin.' },
+      { cat: 'POLICY', title: '[Policy] Chính Sách Lưu Trữ & Hủy Dữ Liệu (Data Retention)', text: 'Chỉ lưu trữ nhật ký và dữ liệu trong khoảng thời gian pháp luật hoặc nghiệp vụ yêu cầu, sau đó thực hiện xóa an toàn để giảm chi phí và rủi ro rò rỉ.' },
+      { cat: 'POLICY', title: '[Policy] Quy Định Sử Dụng Thiết Bị An Toàn (Clean Desk & Screen Lock)', text: 'Luôn khóa màn hình máy tính ngay khi rời khỏi bàn làm việc (Windows+L / Ctrl+Cmd+Q) và bật mã hóa toàn bộ ổ cứng (BitLocker / FileVault) trên thiết bị cá nhân.' },
+      { cat: 'POLICY', title: '[Policy] Quản Lý Tài Sản Công Nghệ (IT Asset Management)', text: 'Duy trì danh mục đầy đủ mọi máy chủ, tên miền, chứng chỉ SSL, kho mã nguồn và dịch vụ Cloud đang hoạt động để không bỏ sót các "Shadow IT" không được bảo vệ.' },
+      { cat: 'POLICY', title: '[Policy] Quy Trình Ứng Phó Sự Cố 4 Bước (Incident Response)', text: 'Chuẩn bị kịch bản (Preparation) -> Phát hiện & Phân tích (Detection) -> Cô lập & Khắc phục (Containment & Recovery) -> Đúc kết cải tiến sau sự cố (Post-Incident).' },
+      { cat: 'POLICY', title: '[Policy] Cấp Quyền Tạm Thời Đúng Lúc (Just-In-Time Access)', text: 'Thay vì cấp quyền truy cập máy chủ Production vĩnh viễn, hãy áp dụng chính sách cấp quyền tự động có thời hạn (ví dụ 2 giờ) khi có yêu cầu xử lý công việc được duyệt.' },
+      { cat: 'POLICY', title: '[Policy] Tiêu Chuẩn Phê Duyệt Mã Nguồn (Branch Protection Policy)', text: 'Khóa nhánh chính (main/production), bắt buộc mọi thay đổi phải đi qua Pull Request có ít nhất 1 đồng nghiệp review và vượt qua toàn bộ bài kiểm thử CI tự động.' },
+      { cat: 'POLICY', title: '[Policy] Đánh Giá An Toàn Nhà Cung Cấp (Vendor Risk Assessment)', text: 'Trước khi tích hợp API hoặc dịch vụ bên thứ ba, cần rà soát chính sách bảo mật, quyền truy cập dữ liệu và cam kết SLA của đối tác.' },
+      { cat: 'POLICY', title: '[Policy] Chính Sách Khung Giờ Triển Khai An Toàn (Release Window)', text: 'Hạn chế triển khai các thay đổi kiến trúc lớn vào cuối chiều thứ Sáu hoặc sát kỳ nghỉ lễ khi đội ngũ kỹ thuật trực hỗ trợ mỏng hơn ngày thường.' },
+      { cat: 'POLICY', title: '[Policy] Minh Bạch Trong Báo Cáo Rủi Ro Sớm', text: 'Khuyến khích văn hóa báo cáo sớm khi phát hiện cấu hình sai hoặc dấu hiệu bất thường để cả đội cùng xử lý ngay từ khi rủi ro còn nhỏ.' },
+      { cat: 'POLICY', title: '[Policy] Chuẩn Hóa Tài Liệu Vận Hành (Runbook / Playbook)', text: 'Mỗi dịch vụ quan trọng đều cần có tài liệu Runbook hướng dẫn từng bước kiểm tra và xử lý khi có cảnh báo để bất kỳ kỹ sư trực ca nào cũng thao tác chính xác.' },
+      { cat: 'POLICY', title: '[Policy] Tuân Thủ Bản Quyền Phần Mềm Nguồn Mở (Open Source License)', text: 'Kiểm tra kỹ giấy phép của các thư viện nguồn mở (MIT, Apache 2.0, GPL...) trước khi đưa vào sản phẩm thương mại để tuân thủ đúng quy định pháp lý.' }
+    ];
+
+    // Bộ câu hỏi Tình huống thực chiến (Case Studies) về Hạ tầng, Security & Policy
+    const PRACTICAL_QUIZZES = [
+      {
+        topic: 'TÌNH HUỐNG #1 • SECURITY & MẠNG HẠ TẦNG',
+        question: 'Bạn đang triển khai một cơ sở dữ liệu PostgreSQL chứa thông tin quan trọng trên Cloud. Cấu hình mạng nào dưới đây tuân thủ đúng chuẩn Security và Hạ tầng?',
+        options: [
+          'A. Đặt Database ở Public Subnet và mở cổng 5432 cho 0.0.0.0/0 để Dev tiện kết nối từ quán cà phê.',
+          'B. Đặt Database ở Private Subnet (không có IP Public), chỉ mở cổng 5432 trong Security Group cho phép App Server kết nối và bật mã hóa TLS/At-Rest.',
+          'C. Đặt Database chung máy chủ với Web Server và tắt tường lửa để giảm độ trễ.'
+        ],
+        correct: 1,
+        explanation: 'Chính xác! Database luôn phải đặt trong Private Subnet biệt lập, chỉ nhận kết nối từ tầng ứng dụng (App Tier) qua Security Group và được mã hóa đầy đủ.'
+      },
+      {
+        topic: 'TÌNH HUỐNG #2 • CHÍNH SÁCH PHÂN QUYỀN (IAM POLICY)',
+        question: 'Một thực tập sinh mới vào nhóm cần quyền xem Log của dịch vụ thanh toán để hỗ trợ kiểm tra lỗi. Theo nguyên tắc Đặc quyền tối thiểu (Least Privilege), bạn nên cấp quyền nào?',
+        options: [
+          'A. Cấp quyền AdministratorAccess toàn bộ Cloud để bạn ấy không bị vướng quyền khi làm việc.',
+          'B. Gửi mật khẩu tài khoản Root của hệ thống qua tin nhắn nhóm.',
+          'C. Chỉ gán Role có quyền Read-Only (Chỉ đọc) đối với nhóm Log của dịch vụ thanh toán và đã ẩn danh dữ liệu nhạy cảm (PII Masking).'
+        ],
+        correct: 2,
+        explanation: 'Chuẩn xác! Nguyên tắc Least Privilege (PoLP) và Data Privacy yêu cầu chỉ cấp đúng quyền đọc Log cần thiết và phải che thông tin nhạy cảm của khách hàng.'
+      },
+      {
+        topic: 'TÌNH HUỐNG #3 • HẠ TẦNG & KHÔI PHỤC THẢM HỌA (DR)',
+        question: 'Để đảm bảo hệ thống có thể khôi phục hoàn toàn ngay cả khi cả một Trung tâm dữ liệu (Data Center) gặp sự cố mất kết nối diện rộng, giải pháp hạ tầng nào là tối ưu nhất?',
+        options: [
+          'A. Sao lưu dữ liệu ra một thư mục khác trên cùng ổ cứng của máy chủ đó.',
+          'B. Thiết kế kiến trúc Multi-AZ / Multi-Region kết hợp quy tắc sao lưu 3-2-1 và định kỳ diễn tập khôi phục (DR Drill) theo mục tiêu RPO/RTO.',
+          'C. Tăng gấp đôi dung lượng RAM cho một máy chủ duy nhất.'
+        ],
+        correct: 1,
+        explanation: 'Rất chuẩn! Chỉ có kiến trúc phân tán đa vùng (Multi-AZ/Region) kèm bản sao lưu Off-site theo chuẩn 3-2-1 mới giúp hệ thống an toàn trước sự cố cấp trung tâm dữ liệu.'
+      },
+      {
+        topic: 'TÌNH HUỐNG #4 • DEVSECOPS & QUẢN LÝ KHÓA BÍ MẬT',
+        question: 'Trong lúc Review Pull Request của đồng nghiệp, bạn phát hiện một chuỗi API Secret Key kết nối cổng thanh toán được viết trực tiếp (hardcode) trong file cấu hình đẩy lên Git. Bạn nên xử lý thế nào?',
+        options: [
+          'A. Nhắc đồng nghiệp xóa dòng đó ở commit tiếp theo là đủ, không cần đổi khóa.',
+          'B. Yêu cầu thu hồi và xoay vòng (Rotate/Revoke) ngay khóa API đó vì lịch sử Git đã lưu lại, sau đó chuyển sang dùng Secret Manager / Vault và bật công cụ Secret Scanning trên CI/CD.',
+          'C. Đổi tên biến thành tên khó đoán hơn rồi duyệt Merge luôn.'
+        ],
+        correct: 1,
+        explanation: 'Xuất sắc! Khi khóa bí mật đã lọt vào lịch sử Git thì coi như đã lộ; phải thu hồi/đổi khóa mới ngay lập tức và chuyển sang lưu trữ trong Vault/Secret Manager.'
+      },
+      {
+        topic: 'TÌNH HUỐNG #5 • CHÍNH SÁCH QUẢN LÝ THAY ĐỔI & SỰ CỐ',
+        question: 'Sau khi triển khai bản cập nhật mới lên Production, hệ thống giám sát (Monitoring) báo tỷ lệ lỗi 500 tăng vọt. Theo chính sách Vận hành & Ứng phó sự cố chuẩn, bước ưu tiên đầu tiên là gì?',
+        options: [
+          'A. Kích hoạt ngay kịch bản Rollback (hoặc chuyển lưu lượng về bản ổn định cũ) để khôi phục dịch vụ cho người dùng, sau đó mới tổ chức họp Blameless Post-Mortem tìm nguyên nhân gốc.',
+          'B. Ngồi sửa code trực tiếp trên máy chủ Production đang chạy mà không qua kiểm thử.',
+          'C. Tắt cảnh báo Monitoring đi để không bị làm phiền.'
+        ],
+        correct: 0,
+        explanation: 'Hoàn toàn chính xác! Trong ứng phó sự cố, ưu tiên số 1 là giảm thiểu thời gian gián đoạn (RTO) bằng Rollback an toàn, sau đó mới phân tích nguyên nhân gốc rễ không đổ lỗi (Blameless Post-Mortem).'
+      }
+    ];
+
+    /* ==========================================================================
+       2. HỆ THỐNG ÂM THANH WEB AUDIO API (GÕ PHÍM CƠ, CHUÔNG BUILD PASS, LO-FI CHILL)
+       ========================================================================== */
+    class TechCampusAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+        this.started = false;
+        this.masterGain = null;
+        this.ambientTimer = null;
+      }
+
+      initAndStart() {
+        if (this.started) {
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+          return;
+        }
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        this.ctx = new AudioCtx();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = this.muted ? 0 : 0.72;
+        this.masterGain.connect(this.ctx.destination);
+        this.started = true;
+
+        this.startBreezeAndCampusAmbience();
+        this.startLofiChordLoop();
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        if (!this.started) this.initAndStart();
+        if (this.masterGain && this.ctx) {
+          this.masterGain.gain.setTargetAtTime(this.muted ? 0 : 0.72, this.ctx.currentTime, 0.08);
+        }
+        return this.muted;
+      }
+
+      startBreezeAndCampusAmbience() {
+        if (!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * 3;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let lastOut = 0.0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          output[i] = (lastOut + (0.02 * white)) / 1.02;
+          lastOut = output[i];
+          output[i] *= 1.8;
+        }
+
+        const whiteNoise = this.ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 420;
+        filter.Q.value = 2.0;
+
+        const windGain = this.ctx.createGain();
+        windGain.gain.value = 0.05;
+
+        whiteNoise.connect(filter);
+        filter.connect(windGain);
+        windGain.connect(this.masterGain);
+        whiteNoise.start(0);
+      }
+
+      startLofiChordLoop() {
+        if (!this.ctx) return;
+
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        osc1.frequency.value = 220;
+        osc2.frequency.value = 277.18;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 340;
+
+        const padGain = this.ctx.createGain();
+        padGain.gain.value = 0.024;
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(padGain);
+        padGain.connect(this.masterGain);
+
+        osc1.start();
+        osc2.start();
+
+        this.ambientTimer = setInterval(() => {
+          if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+          const r = Math.random();
+          if (r < 0.48) {
+            this.playBirdChirp();
+          } else if (r < 0.82) {
+            this.playMechanicalKeyClick(0.2, 1.1);
+          } else {
+            this.playPipelineChime(0.22, 2.2);
+          }
+        }, 3000);
+      }
+
+      playBirdChirp() {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const baseFreq = 1900 + Math.random() * 550;
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, now + 0.09);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.95, now + 0.18);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.03, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.28);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+
+      playPipelineChime(volume = 0.65, duration = 3.2) {
+        if (!this.ctx) this.initAndStart();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const ratios = [1.0, 1.5, 2.0, 3.0];
+        const baseFreq = 329.63;
+
+        ratios.forEach((ratio, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(baseFreq * ratio, now);
+
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime((volume * 0.25) / (idx + 1), now + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + duration * (1 - idx * 0.15));
+
+          osc.connect(g);
+          g.connect(this.masterGain);
+          osc.start(now);
+          osc.stop(now + duration + 0.05);
+        });
+      }
+
+      playMechanicalKeyClick(volume = 0.55, pitchScale = 1.0) {
+        if (!this.ctx) this.initAndStart();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        const freq = 680 * pitchScale;
+        osc.frequency.setValueAtTime(freq * 1.35, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.75, now + 0.03);
+
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(freq, now);
+        filter.Q.value = 4.5;
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(volume, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.09);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+
+      playCardShuffle() {
+        if (!this.ctx) this.initAndStart();
+        if (!this.ctx) return;
+        this.playMechanicalKeyClick(0.35, 1.45 + Math.random() * 0.35);
+      }
+
+      playChimeSuccess() {
+        if (!this.ctx) this.initAndStart();
+        if (!this.ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((f, idx) => {
+          const now = this.ctx.currentTime + idx * 0.085;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, now);
+          g.gain.setValueAtTime(0.001, now);
+          g.gain.linearRampToValueAtTime(0.18, now + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0005, now + 0.6);
+          osc.connect(g);
+          g.connect(this.masterGain);
+          osc.start(now);
+          osc.stop(now + 0.65);
+        });
+      }
+    }
+
+    const audio = new TechCampusAudioEngine();
+
+    /* ==========================================================================
+       3. KHỞI TẠO CẢNH 3D SÁNG SỦA (KHUÔN VIÊN CÔNG NGHỆ XANH MÁT & HIỆN ĐẠI)
+       ========================================================================== */
+    const canvas = document.getElementById('three-canvas');
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      preserveDrawingBuffer: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x8ecae6);
+    scene.fog = new THREE.FogExp2(0x8ecae6, 0.0075);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.2, 170);
+    camera.position.set(0, 6.5, 29);
+
+    const managedTextures = [];
+    function registerTexture(tex) {
+      managedTextures.push(tex);
+      return tex;
+    }
+    function disposeUnusedTexture(tex) {
+      if (tex && typeof tex.dispose === 'function') {
+        tex.dispose();
+      }
+    }
+    window.addEventListener('pagehide', () => {
+      managedTextures.forEach((t) => disposeUnusedTexture(t));
+    });
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x64748b, 1.45);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.9);
+    sunLight.position.set(-18, 30, 18);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.camera.near = 2;
+    sunLight.shadow.camera.far = 85;
+    const d = 32;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    scene.add(sunLight);
+
+    const hubCoreLight = new THREE.PointLight(0x38bdf8, 2.4, 26);
+    hubCoreLight.position.set(0, 5.0, -13.2);
+    scene.add(hubCoreLight);
+
+    const serverGlowLight = new THREE.PointLight(0x10b981, 2.0, 15);
+    serverGlowLight.position.set(0, 2.8, -2.0);
+    scene.add(serverGlowLight);
+
+    const pondOpticalLight = new THREE.PointLight(0x06b6d4, 1.85, 16);
+    pondOpticalLight.position.set(11.2, 1.8, 2.5);
+    scene.add(pondOpticalLight);
+
+    const campusWalkwayLight = new THREE.PointLight(0xfde047, 1.6, 28);
+    campusWalkwayLight.position.set(0, 5.5, 7.0);
+    scene.add(campusWalkwayLight);
+
+    const sunDiscMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(5.2, 20, 20),
+      new THREE.MeshBasicMaterial({ color: 0xfef08a })
+    );
+    sunDiscMesh.position.set(-22, 22, -52);
+    scene.add(sunDiscMesh);
+
+    /* ==========================================================================
+       4. DỰNG KIẾN TRÚC KHUÔN VIÊN CÔNG NGHỆ 3D (TECHHUB CAMPUS)
+       ========================================================================== */
+    const colliders = [];
+    function addCircleCollider(x, z, r) {
+      colliders.push({ x, z, r });
+    }
+
+    const matStone = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.65 });
+    const matDarkMetal = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.35 });
+    const matTechBlue = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.35, roughness: 0.35 });
+    const matRoofGlass = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, metalness: 0.4, roughness: 0.25 });
+    const matWallWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.55 });
+    const matEmerald = new THREE.MeshStandardMaterial({
+      color: 0x10b981,
+      emissive: 0x059669,
+      emissiveIntensity: 0.6,
+      roughness: 0.3
+    });
+    const matGold = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      emissive: 0xca8a04,
+      emissiveIntensity: 0.45,
+      metalness: 0.45,
+      roughness: 0.25
+    });
+    const matIdeaCard = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      emissive: 0xd97706,
+      emissiveIntensity: 0.5,
+      side: THREE.DoubleSide
+    });
+
+    function createCampusPlazaTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 3;
+      const step = 32;
+      for (let y = 0; y < 256; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(256, y);
+        ctx.stroke();
+        for (let x = 0; x < 256; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x, y + step);
+          ctx.stroke();
+        }
+      }
+      ctx.strokeStyle = 'rgba(14, 165, 233, 0.35)';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(16, 16, 224, 224);
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(18, 18);
+      return registerTexture(tex);
+    }
+
+    function createTextPlaqueMesh(text, subText, width = 5.4, height = 1.25) {
+      const c = document.createElement('canvas');
+      c.width = 512;
+      c.height = 128;
+      const ctx = c.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, 0, 128);
+      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(1, '#1e3a8a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 128);
+
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(8, 8, 496, 112);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 40px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, 256, subText ? 48 : 64);
+
+      if (subText) {
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '600 21px "Segoe UI", sans-serif';
+        ctx.fillText(subText, 256, 94);
+      }
+
+      const tex = registerTexture(new THREE.CanvasTexture(c));
+      const geo = new THREE.BoxGeometry(width, height, 0.18);
+      const faceMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.3 });
+      const mats = [matDarkMetal, matDarkMetal, matDarkMetal, matDarkMetal, faceMat, faceMat];
+      return new THREE.Mesh(geo, mats);
+    }
+
+    const groundGeo = new THREE.PlaneGeometry(120, 120);
+    const grassMat = new THREE.MeshStandardMaterial({ color: 0x65a34e, roughness: 0.88 });
+    const groundMesh = new THREE.Mesh(groundGeo, grassMat);
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.receiveShadow = true;
+    scene.add(groundMesh);
+
+    const courtyardGeo = new THREE.PlaneGeometry(34, 42);
+    const courtyardMat = new THREE.MeshStandardMaterial({
+      map: createCampusPlazaTexture(),
+      roughness: 0.65
+    });
+    const courtyardMesh = new THREE.Mesh(courtyardGeo, courtyardMat);
+    courtyardMesh.rotation.x = -Math.PI / 2;
+    courtyardMesh.position.set(0, 0.02, 2);
+    courtyardMesh.receiveShadow = true;
+    scene.add(courtyardMesh);
+
+    // 4.2 Cổng Chào Học Viện Công Nghệ (Cổng Tường Lửa & Zero Trust Gateway)
+    function buildTechCampusGate() {
+      const gateGroup = new THREE.Group();
+      gateGroup.position.set(0, 0, 19.5);
+
+      const pillarX = [-6.8, -2.5, 2.5, 6.8];
+      pillarX.forEach((px, idx) => {
+        const h = (idx === 1 || idx === 2) ? 6.2 : 4.8;
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.42, h, 12), matTechBlue);
+        pillar.position.set(px, h / 2, 0);
+        pillar.castShadow = true;
+        gateGroup.add(pillar);
+        addCircleCollider(px, 19.5, 0.75);
+      });
+
+      const archTop = new THREE.Mesh(new THREE.BoxGeometry(15.2, 0.9, 1.2), matRoofGlass);
+      archTop.position.set(0, 6.3, 0);
+      gateGroup.add(archTop);
+
+      [-11.8, 11.8].forEach((wx) => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(9.2, 2.0, 0.55), matWallWhite);
+        wall.position.set(wx, 1.0, 0);
+        wall.castShadow = true;
+        gateGroup.add(wall);
+        addCircleCollider(wx - 2.5, 19.5, 1.4);
+        addCircleCollider(wx + 2.5, 19.5, 1.4);
+      });
+
+      const plaque = createTextPlaqueMesh('TECHHUB CAMPUS', 'Infrastructure • Security • IT Policy', 5.4, 1.15);
+      plaque.position.set(0, 5.25, 0.35);
+      gateGroup.add(plaque);
+
+      scene.add(gateGroup);
+    }
+    buildTechCampusGate();
+
+    // 4.3 Cụm Server Cloud & Tường Lửa WAF trung tâm (x = 0, z = -2.0)
+    const playerServerNodesGroup = new THREE.Group();
+    let wafShieldDomeMesh = null;
+    function buildCentralServerCluster() {
+      const clusterGroup = new THREE.Group();
+      clusterGroup.position.set(0, 0, -2.0);
+
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 2.15, 0.45, 12), matStone);
+      base.position.y = 0.22;
+      base.receiveShadow = true;
+      clusterGroup.add(base);
+
+      const mainRack = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 2.2, 12), matDarkMetal);
+      mainRack.position.y = 1.45;
+      mainRack.castShadow = true;
+      clusterGroup.add(mainRack);
+
+      [0.9, 1.45, 2.0].forEach((ly) => {
+        const ledRing = new THREE.Mesh(new THREE.TorusGeometry(1.27, 0.05, 8, 24), matEmerald);
+        ledRing.rotation.x = Math.PI / 2;
+        ledRing.position.y = ly;
+        clusterGroup.add(ledRing);
+      });
+
+      // Vòm lá chắn bảo mật WAF / Zero Trust bán trong suốt bảo vệ Cụm Server
+      wafShieldDomeMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(1.85, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        new THREE.MeshBasicMaterial({
+          color: 0x38bdf8,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.28
+        })
+      );
+      wafShieldDomeMesh.position.y = 0.45;
+      clusterGroup.add(wafShieldDomeMesh);
+
+      playerServerNodesGroup.position.set(0, 2.55, 0);
+      clusterGroup.add(playerServerNodesGroup);
+
+      scene.add(clusterGroup);
+      addCircleCollider(0, -2.0, 2.15);
+    }
+    buildCentralServerCluster();
+
+    const activeServerBlades = [];
+    function spawnPlayerServerNodes(count) {
+      while (playerServerNodesGroup.children.length > 0) {
+        playerServerNodesGroup.remove(playerServerNodesGroup.children[0]);
+      }
+      activeServerBlades.length = 0;
+
+      const offsets = count === 1 ? [0] : [-0.45, 0, 0.45];
+      offsets.forEach((ox) => {
+        const holder = new THREE.Group();
+        holder.position.set(ox, 0, 0);
+
+        const stem = new THREE.Mesh(
+          new THREE.BoxGeometry(0.24, 0.85, 0.24),
+          new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.5, roughness: 0.2 })
+        );
+        stem.position.y = 0.42;
+        holder.add(stem);
+
+        const beacon = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.16, 0),
+          new THREE.MeshBasicMaterial({ color: 0x34d399 })
+        );
+        beacon.position.y = 1.02;
+        holder.add(beacon);
+
+        playerServerNodesGroup.add(holder);
+        activeServerBlades.push({ stem, beacon, progress: 0 });
+      });
+    }
+
+    // 4.4 Trung Tâm R&D & SOC (Security Operations Center) ở z = -14.5
+    let mechanicalKeyboard3D = null;
+    let mentorCardBox3D = null;
+    let aiCoreSphere3D = null;
+
+    function buildRnDCenterAndAICore() {
+      const center = new THREE.Group();
+      center.position.set(0, 0, -14.5);
+
+      const platform = new THREE.Mesh(new THREE.BoxGeometry(18.5, 1.1, 11.5), matStone);
+      platform.position.y = 0.55;
+      platform.receiveShadow = true;
+      center.add(platform);
+
+      const stairs = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.65, 2.2), matStone);
+      stairs.position.set(0, 0.32, 6.2);
+      center.add(stairs);
+
+      const colPositions = [
+        [-7.6, 4.8], [-4.2, 4.8], [4.2, 4.8], [7.6, 4.8],
+        [-7.6, 0], [7.6, 0],
+        [-7.6, -4.6], [-3.8, -4.6], [3.8, -4.6], [7.6, -4.6]
+      ];
+      colPositions.forEach(([cx, cz]) => {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 5.6, 12), matTechBlue);
+        col.position.set(cx, 3.8, cz);
+        col.castShadow = true;
+        center.add(col);
+      });
+
+      const backWall = new THREE.Mesh(new THREE.BoxGeometry(15.6, 5.5, 0.45), matWallWhite);
+      backWall.position.set(0, 3.8, -4.6);
+      center.add(backWall);
+
+      [-7.6, 7.6].forEach((sx) => {
+        const sideWall = new THREE.Mesh(new THREE.BoxGeometry(0.45, 5.5, 9.4), matWallWhite);
+        sideWall.position.set(sx, 3.8, 0);
+        center.add(sideWall);
+      });
+
+      const roofLower = new THREE.Mesh(new THREE.ConeGeometry(13.2, 2.4, 4), matRoofGlass);
+      roofLower.rotation.y = Math.PI / 4;
+      roofLower.scale.set(1.22, 1, 0.78);
+      roofLower.position.set(0, 7.4, 0.2);
+      roofLower.castShadow = true;
+      center.add(roofLower);
+
+      const roofUpper = new THREE.Mesh(new THREE.ConeGeometry(9.5, 2.1, 4), matTechBlue);
+      roofUpper.rotation.y = Math.PI / 4;
+      roofUpper.scale.set(1.22, 1, 0.78);
+      roofUpper.position.set(0, 9.2, 0.2);
+      center.add(roofUpper);
+
+      const hallPlaque = createTextPlaqueMesh('TRUNG TÂM R&D & SOC', 'Zero Trust • Clean Code • Governance', 6.2, 1.15);
+      hallPlaque.position.set(0, 6.15, 5.1);
+      center.add(hallPlaque);
+
+      const coreGroup = new THREE.Group();
+      coreGroup.position.set(0, 1.1, -1.6);
+
+      const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.2, 1.4, 12), matDarkMetal);
+      pedestal.position.y = 0.7;
+      coreGroup.add(pedestal);
+
+      aiCoreSphere3D = new THREE.Mesh(
+        new THREE.OctahedronGeometry(1.35, 1),
+        new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          emissive: 0x0284c7,
+          emissiveIntensity: 0.75,
+          metalness: 0.4,
+          roughness: 0.15
+        })
+      );
+      aiCoreSphere3D.position.y = 3.2;
+      coreGroup.add(aiCoreSphere3D);
+
+      const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(1.95, 0.07, 8, 32), matEmerald);
+      orbitRing.position.set(0, 3.2, 0);
+      orbitRing.rotation.x = Math.PI / 3;
+      coreGroup.add(orbitRing);
+
+      center.add(coreGroup);
+
+      // Bàn Luyện Tập Clean Code & OWASP
+      const codeDesk = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.85, 1.1), matDarkMetal);
+      codeDesk.position.set(-2.2, 1.5, 3.2);
+      center.add(codeDesk);
+
+      mechanicalKeyboard3D = new THREE.Mesh(
+        new THREE.BoxGeometry(0.75, 0.12, 0.35),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3 })
+      );
+      mechanicalKeyboard3D.position.set(-2.2, 2.02, 3.3);
+      center.add(mechanicalKeyboard3D);
+
+      // Bàn Cẩm Nang Mentor
+      const mentorDesk = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.85, 1.1), matDarkMetal);
+      mentorDesk.position.set(2.8, 1.5, 3.2);
+      center.add(mentorDesk);
+
+      mentorCardBox3D = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.55, 0.32), matGold);
+      mentorCardBox3D.position.set(2.8, 2.15, 3.2);
+      center.add(mentorCardBox3D);
+
+      scene.add(center);
+
+      addCircleCollider(0, -16.0, 3.2);
+      addCircleCollider(-6.2, -14.5, 3.0);
+      addCircleCollider(6.2, -14.5, 3.0);
+      addCircleCollider(0, -19.0, 3.8);
+    }
+    buildRnDCenterAndAICore();
+
+    // 4.5 Trạm Điều Phối DevSecOps CI/CD (x = -11.2, z = -4.5)
+    let cicdCoreMesh3D = null;
+    let cicdPulseBeam3D = null;
+    let cicdShockwaveRing = null;
+
+    function buildCICDStation() {
+      const tower = new THREE.Group();
+      tower.position.set(-11.2, 0, -4.5);
+
+      const base = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.9, 5.6), matStone);
+      base.position.y = 0.45;
+      tower.add(base);
+
+      [
+        [-2.1, -2.1], [2.1, -2.1], [-2.1, 2.1], [2.1, 2.1]
+      ].forEach(([cx, cz]) => {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 5.2, 10), matTechBlue);
+        col.position.set(cx, 3.4, cz);
+        col.castShadow = true;
+        tower.add(col);
+      });
+
+      const roof1 = new THREE.Mesh(new THREE.ConeGeometry(4.6, 1.7, 4), matRoofGlass);
+      roof1.rotation.y = Math.PI / 4;
+      roof1.position.set(0, 6.4, 0);
+      tower.add(roof1);
+
+      cicdCoreMesh3D = new THREE.Group();
+      cicdCoreMesh3D.position.set(0, 4.6, 0);
+
+      const coreCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.72, 1.5, 14), matEmerald);
+      coreCyl.position.y = -0.9;
+      cicdCoreMesh3D.add(coreCyl);
+
+      const coreRim = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.88, 0.35, 14), matGold);
+      coreRim.position.y = -1.7;
+      cicdCoreMesh3D.add(coreRim);
+
+      tower.add(cicdCoreMesh3D);
+
+      cicdPulseBeam3D = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.6, 8), matTechBlue);
+      cicdPulseBeam3D.rotation.z = Math.PI / 2;
+      cicdPulseBeam3D.position.set(1.35, 3.3, 0);
+      tower.add(cicdPulseBeam3D);
+
+      cicdShockwaveRing = new THREE.Mesh(
+        new THREE.RingGeometry(0.8, 1.2, 28),
+        new THREE.MeshBasicMaterial({ color: 0x34d399, side: THREE.DoubleSide, transparent: true, opacity: 0 })
+      );
+      cicdShockwaveRing.rotation.x = -Math.PI / 2;
+      cicdShockwaveRing.position.set(0, 1.2, 0);
+      tower.add(cicdShockwaveRing);
+
+      scene.add(tower);
+      addCircleCollider(-11.2, -4.5, 2.85);
+    }
+    buildCICDStation();
+
+    // 4.6 Cây Tri Thức & Chính Sách IT (Tech Policy Tree ở x = -10.8, z = 6.2)
+    const techTreeCardsGroup = new THREE.Group();
+    function buildTechKnowledgeTree() {
+      const tree = new THREE.Group();
+      tree.position.set(-10.8, 0, 6.2);
+
+      const stoneRing = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.85, 0.55, 12), matStone);
+      stoneRing.position.y = 0.27;
+      tree.add(stoneRing);
+
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.75, 1.25, 4.8, 10),
+        new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: 0.75 })
+      );
+      trunk.position.y = 2.5;
+      trunk.castShadow = true;
+      tree.add(trunk);
+
+      const leafMat1 = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.65 });
+      const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x34d399, roughness: 0.65 });
+      const crownCoords = [
+        [0, 5.8, 0, 3.4, leafMat1],
+        [-2.2, 4.9, 1.2, 2.4, leafMat2],
+        [2.2, 5.0, -1.0, 2.5, leafMat2],
+        [-1.5, 5.2, -1.8, 2.3, leafMat1],
+        [1.8, 4.7, 1.8, 2.3, leafMat2]
+      ];
+      crownCoords.forEach(([lx, ly, lz, r, mat]) => {
+        const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 1), mat);
+        crown.position.set(lx, ly, lz);
+        crown.castShadow = true;
+        tree.add(crown);
+      });
+
+      for (let i = 0; i < 28; i++) {
+        const ang = (i / 28) * Math.PI * 2;
+        const rad = 1.6 + (i % 3) * 0.75;
+        const rx = Math.cos(ang) * rad;
+        const rz = Math.sin(ang) * rad;
+        const ry = 3.2 + (i % 4) * 0.35;
+
+        const card = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.75), matIdeaCard);
+        card.position.set(rx, ry, rz);
+        card.userData = { baseX: rx, phase: i * 0.7 };
+        techTreeCardsGroup.add(card);
+      }
+
+      tree.add(techTreeCardsGroup);
+      scene.add(tree);
+      addCircleCollider(-10.8, 6.2, 2.75);
+    }
+    buildTechKnowledgeTree();
+
+    function addPlayerCardToTechTree() {
+      const ang = Math.random() * Math.PI * 2;
+      const rad = 2.1 + Math.random() * 1.1;
+      const rx = Math.cos(ang) * rad;
+      const rz = Math.sin(ang) * rad;
+      const card = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.28, 0.95),
+        new THREE.MeshStandardMaterial({
+          color: 0xfef08a,
+          emissive: 0xf59e0b,
+          emissiveIntensity: 0.85,
+          side: THREE.DoubleSide
+        })
+      );
+      card.position.set(rx, 3.15, rz);
+      card.userData = { baseX: rx, phase: Math.random() * 6 };
+      techTreeCardsGroup.add(card);
+    }
+
+    // 4.7 Hồ Tản Nhiệt Quang Học & Lưu Trữ Mã Hóa (x = 11.2, z = 2.5)
+    const floatingDataPodsGroup = new THREE.Group();
+    function buildOpticalCoolingPond() {
+      const pond = new THREE.Group();
+      pond.position.set(11.2, 0, 2.5);
+
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(4.6, 0.42, 8, 24), matStone);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 0.22;
+      pond.add(rim);
+
+      const water = new THREE.Mesh(
+        new THREE.CircleGeometry(4.5, 24),
+        new THREE.MeshStandardMaterial({
+          color: 0x0284c7,
+          roughness: 0.15,
+          metalness: 0.25
+        })
+      );
+      water.rotation.x = -Math.PI / 2;
+      water.position.y = 0.08;
+      pond.add(water);
+
+      for (let i = 0; i < 14; i++) {
+        spawnFloatingDataPodInPond(false, i);
+      }
+
+      pond.add(floatingDataPodsGroup);
+      scene.add(pond);
+      addCircleCollider(11.2, 2.5, 4.75);
+    }
+
+    function spawnFloatingDataPodInPond(isPlayer = false, idx = 0) {
+      const pod = new THREE.Group();
+      const baseRing = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.16, 0.1, 8),
+        new THREE.MeshStandardMaterial({ color: isPlayer ? 0xf59e0b : 0x38bdf8 })
+      );
+      pod.add(baseRing);
+
+      const crystal = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.14, 0),
+        new THREE.MeshBasicMaterial({ color: isPlayer ? 0xfef08a : 0x67e8f9 })
+      );
+      crystal.position.y = 0.15;
+      pod.add(crystal);
+
+      const angle = isPlayer ? Math.random() * Math.PI * 2 : (idx / 14) * Math.PI * 2;
+      const radius = isPlayer ? 1.8 : 0.8 + (idx % 4) * 0.78;
+      pod.userData = {
+        angle,
+        radius,
+        speed: 0.15 + (idx % 3) * 0.04
+      };
+      pod.position.set(Math.cos(angle) * radius, 0.12, Math.sin(angle) * radius);
+      floatingDataPodsGroup.add(pod);
+    }
+    buildOpticalCoolingPond();
+
+    function buildCampusLampRows() {
+      const zPositions = [14.5, 9.5, 4.5, -0.5, -5.5];
+      zPositions.forEach((lz) => {
+        [-5.6, 5.6].forEach((lx) => {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 3.6, 8), matDarkMetal);
+          post.position.set(lx, 1.8, lz);
+          scene.add(post);
+
+          const orb = new THREE.Mesh(
+            new THREE.SphereGeometry(0.3, 12, 12),
+            new THREE.MeshStandardMaterial({
+              color: 0x38bdf8,
+              emissive: 0x0ea5e9,
+              emissiveIntensity: 0.85
+            })
+          );
+          orb.position.set(lx, 3.65, lz);
+          scene.add(orb);
+        });
+      });
+    }
+    buildCampusLampRows();
+
+    const ACTIVITY_ZONES = [
+      { id: 'incense', name: '🖧 Hạ Tầng Server & VPC', label: 'Cụm Server Cloud & WAF', x: 0, z: 0.8, radius: 3.3 },
+      { id: 'bell', name: '🛡️ Cổng DevSecOps CI/CD', label: 'Trạm DevSecOps CI/CD', x: -8.2, z: -4.2, radius: 3.4 },
+      { id: 'chant', name: '⌨️ Clean Code & OWASP', label: 'Bàn Luyện Clean Code & OWASP', x: -2.2, z: -7.6, radius: 3.4 },
+      { id: 'wish', name: '📜 Quy Chuẩn Policy & Infra', label: 'Cây Policy & Hồ Dữ Liệu', x: -7.5, z: 6.0, radius: 4.0, altX: 6.5, altZ: 2.5 },
+      { id: 'fortune', name: '🎴 60 Thẻ Cẩm Nang IT', label: 'Bàn Cố Vấn Mentor', x: 2.8, z: -7.6, radius: 3.4 }
+    ];
+
+    const zoneRingMeshes = [];
+    const bubblesContainer = document.getElementById('ai-bubbles-layer');
+    const zoneLabelElements = [];
+
+    ACTIVITY_ZONES.forEach((zone) => {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(1.1, 1.4, 28),
+        new THREE.MeshBasicMaterial({
+          color: 0x10b981,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.82
+        })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(zone.x, 0.06, zone.z);
+      scene.add(ring);
+      zoneRingMeshes.push(ring);
+
+      const el = document.createElement('div');
+      el.className = 'zone-label-3d';
+      el.textContent = zone.name;
+      bubblesContainer.appendChild(el);
+      zoneLabelElements.push({ el, pos: new THREE.Vector3(zone.x, 2.35, zone.z) });
+    });
+
+    /* ==========================================================================
+       5. HỆ THỐNG HẠT: LUỒNG DỮ LIỆU MÃ HÓA, HẠT QUANG HỌC
+       ========================================================================== */
+    function createSoftParticleTexture() {
+      const c = document.createElement('canvas');
+      c.width = 64;
+      c.height = 64;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+      g.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      g.addColorStop(0.5, 'rgba(186, 230, 253, 0.55)');
+      g.addColorStop(1, 'rgba(186, 230, 253, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 64, 64);
+      return registerTexture(new THREE.CanvasTexture(c));
+    }
+    const softParticleTex = createSoftParticleTexture();
+
+    const SMOKE_COUNT = 55;
+    const smokeGeo = new THREE.BufferGeometry();
+    const smokePositions = new Float32Array(SMOKE_COUNT * 3);
+    for (let i = 0; i < SMOKE_COUNT; i++) {
+      smokePositions[i * 3] = (Math.random() - 0.5) * 1.1;
+      smokePositions[i * 3 + 1] = 2.2 + Math.random() * 4.5;
+      smokePositions[i * 3 + 2] = -2.0 + (Math.random() - 0.5) * 1.1;
+    }
+    smokeGeo.setAttribute('position', new THREE.BufferAttribute(smokePositions, 3));
+    const smokeMat = new THREE.PointsMaterial({
+      color: 0x34d399,
+      map: softParticleTex,
+      size: 0.65,
+      transparent: true,
+      opacity: 0.7,
+      depthWrite: false
+    });
+    const smokePoints = new THREE.Points(smokeGeo, smokeMat);
+    scene.add(smokePoints);
+
+    const FIREFLY_COUNT = 65;
+    const fireflyGeo = new THREE.BufferGeometry();
+    const fireflyPositions = new Float32Array(FIREFLY_COUNT * 3);
+    for (let i = 0; i < FIREFLY_COUNT; i++) {
+      fireflyPositions[i * 3] = (Math.random() - 0.5) * 32;
+      fireflyPositions[i * 3 + 1] = 0.6 + Math.random() * 4.5;
+      fireflyPositions[i * 3 + 2] = (Math.random() - 0.5) * 34;
+    }
+    fireflyGeo.setAttribute('position', new THREE.BufferAttribute(fireflyPositions, 3));
+    const fireflyMat = new THREE.PointsMaterial({
+      color: 0x38bdf8,
+      map: softParticleTex,
+      size: 0.55,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const fireflyPoints = new THREE.Points(fireflyGeo, fireflyMat);
+    scene.add(fireflyPoints);
+
+    const PETAL_COUNT = 50;
+    const petalGeo = new THREE.BufferGeometry();
+    const petalPositions = new Float32Array(PETAL_COUNT * 3);
+    for (let i = 0; i < PETAL_COUNT; i++) {
+      petalPositions[i * 3] = (Math.random() - 0.5) * 28;
+      petalPositions[i * 3 + 1] = 1.0 + Math.random() * 9.0;
+      petalPositions[i * 3 + 2] = (Math.random() - 0.5) * 28;
+    }
+    petalGeo.setAttribute('position', new THREE.BufferAttribute(petalPositions, 3));
+    const petalMat = new THREE.PointsMaterial({
+      color: 0xfde047,
+      map: softParticleTex,
+      size: 0.36,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false
+    });
+    const petalPoints = new THREE.Points(petalGeo, petalMat);
+    scene.add(petalPoints);
+
+    /* ==========================================================================
+       6. NHÂN VẬT KỸ SƯ IT (CHIBI HOODIE XANH, TAI NGHE, BIỂU CẢM & ĐẠO CỤ)
+       ========================================================================== */
+    const player = {
+      group: new THREE.Group(),
+      bodyPivot: new THREE.Group(),
+      headGroup: new THREE.Group(),
+      leftArmPivot: new THREE.Group(),
+      rightArmPivot: new THREE.Group(),
+      leftLegPivot: new THREE.Group(),
+      rightLegPivot: new THREE.Group(),
+      leftEyeOpen: null,
+      rightEyeOpen: null,
+      leftEyeHappy: null,
+      rightEyeHappy: null,
+      mouthCalm: null,
+      mouthSmile: null,
+      handTabletProp: null,
+      handLaptopProp: null,
+      handCardProp: null,
+      workMat: null,
+      x: 0,
+      z: 14.5,
+      rotY: Math.PI,
+      speed: 6.4,
+      bowTimer: 0,
+      waveTimer: 0,
+      meditateTimer: 0,
+      joyTimer: 0,
+      blinkTimer: 0,
+      expression: 'calm'
+    };
+
+    function buildExpressiveTechEngineerChibi() {
+      const g = player.group;
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffe2c4, roughness: 0.55 });
+      const hoodieMat = new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.55 });
+      const lanyardMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.5 });
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+      const blushMat = new THREE.MeshBasicMaterial({ color: 0xff8fa3, transparent: true, opacity: 0.6 });
+      const darkFeatureMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+
+      g.add(player.bodyPivot);
+
+      player.workMat = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.58, 0.64, 0.12, 16),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.6 })
+      );
+      player.workMat.position.y = 0.06;
+      player.workMat.visible = false;
+      g.add(player.workMat);
+
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.39, 0.84, 12), hoodieMat);
+      torso.position.y = 0.86;
+      torso.castShadow = true;
+      player.bodyPivot.add(torso);
+
+      const lanyard = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.04, 8, 16), lanyardMat);
+      lanyard.rotation.x = Math.PI / 2;
+      lanyard.position.y = 1.24;
+      player.bodyPivot.add(lanyard);
+
+      const idBadge = new THREE.Mesh(
+        new THREE.BoxGeometry(0.16, 0.22, 0.03),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      idBadge.position.set(0, 0.92, 0.34);
+      player.bodyPivot.add(idBadge);
+
+      player.headGroup.position.set(0, 1.54, 0);
+      player.bodyPivot.add(player.headGroup);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), skinMat);
+      head.castShadow = true;
+      player.headGroup.add(head);
+
+      const hairCap = new THREE.Mesh(
+        new THREE.SphereGeometry(0.368, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.6),
+        hairMat
+      );
+      hairCap.position.y = 0.02;
+      player.headGroup.add(hairCap);
+
+      const headphoneBand = new THREE.Mesh(
+        new THREE.TorusGeometry(0.37, 0.035, 8, 20, Math.PI),
+        lanyardMat
+      );
+      headphoneBand.position.y = 0.02;
+      player.headGroup.add(headphoneBand);
+
+      [-0.36, 0.36].forEach((hx) => {
+        const earCup = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.08, 12), lanyardMat);
+        earCup.rotation.z = Math.PI / 2;
+        earCup.position.set(hx, 0.0, 0);
+        player.headGroup.add(earCup);
+      });
+
+      [-0.18, 0.18].forEach((bx) => {
+        const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), blushMat);
+        cheek.scale.set(1.2, 0.75, 0.5);
+        cheek.position.set(bx, -0.04, 0.31);
+        player.headGroup.add(cheek);
+      });
+
+      player.leftEyeOpen = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 8), darkFeatureMat);
+      player.leftEyeOpen.scale.set(1, 1.25, 0.6);
+      player.leftEyeOpen.position.set(-0.12, 0.04, 0.325);
+      player.headGroup.add(player.leftEyeOpen);
+
+      player.rightEyeOpen = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 8), darkFeatureMat);
+      player.rightEyeOpen.scale.set(1, 1.25, 0.6);
+      player.rightEyeOpen.position.set(0.12, 0.04, 0.325);
+      player.headGroup.add(player.rightEyeOpen);
+
+      const eyeArcGeo = new THREE.TorusGeometry(0.045, 0.012, 6, 10, Math.PI);
+      player.leftEyeHappy = new THREE.Mesh(eyeArcGeo, darkFeatureMat);
+      player.leftEyeHappy.position.set(-0.12, 0.03, 0.33);
+      player.leftEyeHappy.visible = false;
+      player.headGroup.add(player.leftEyeHappy);
+
+      player.rightEyeHappy = new THREE.Mesh(eyeArcGeo, darkFeatureMat);
+      player.rightEyeHappy.position.set(0.12, 0.03, 0.33);
+      player.rightEyeHappy.visible = false;
+      player.headGroup.add(player.rightEyeHappy);
+
+      player.mouthCalm = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.016, 0.02), darkFeatureMat);
+      player.mouthCalm.position.set(0, -0.11, 0.33);
+      player.headGroup.add(player.mouthCalm);
+
+      const smileGeo = new THREE.TorusGeometry(0.052, 0.014, 6, 12, Math.PI);
+      player.mouthSmile = new THREE.Mesh(smileGeo, new THREE.MeshBasicMaterial({ color: 0xe11d48 }));
+      player.mouthSmile.rotation.z = Math.PI;
+      player.mouthSmile.position.set(0, -0.09, 0.33);
+      player.mouthSmile.visible = false;
+      player.headGroup.add(player.mouthSmile);
+
+      player.leftArmPivot.position.set(-0.34, 1.18, 0);
+      player.bodyPivot.add(player.leftArmPivot);
+      const leftArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.075, 0.52, 8), hoodieMat);
+      leftArmMesh.position.y = -0.24;
+      player.leftArmPivot.add(leftArmMesh);
+      const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), skinMat);
+      leftHand.position.y = -0.5;
+      player.leftArmPivot.add(leftHand);
+
+      player.rightArmPivot.position.set(0.34, 1.18, 0);
+      player.bodyPivot.add(player.rightArmPivot);
+      const rightArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.075, 0.52, 8), hoodieMat);
+      rightArmMesh.position.y = -0.24;
+      player.rightArmPivot.add(rightArmMesh);
+      const rightHand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), skinMat);
+      rightHand.position.y = -0.5;
+      player.rightArmPivot.add(rightHand);
+
+      player.handTabletProp = new THREE.Mesh(
+        new THREE.BoxGeometry(0.28, 0.36, 0.03),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+      );
+      player.handTabletProp.position.set(-0.12, -0.52, 0.16);
+      player.handTabletProp.rotation.x = Math.PI / 3;
+      player.handTabletProp.visible = false;
+      player.rightArmPivot.add(player.handTabletProp);
+
+      player.handLaptopProp = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.04, 0.24),
+        new THREE.MeshBasicMaterial({ color: 0x34d399 })
+      );
+      player.handLaptopProp.position.set(0, -0.5, 0.14);
+      player.handLaptopProp.visible = false;
+      player.rightArmPivot.add(player.handLaptopProp);
+
+      player.handCardProp = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.45), matIdeaCard);
+      player.handCardProp.position.set(0, -0.62, 0.12);
+      player.handCardProp.visible = false;
+      player.rightArmPivot.add(player.handCardProp);
+
+      const jeansMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.75 });
+      player.leftLegPivot.position.set(-0.15, 0.48, 0);
+      player.bodyPivot.add(player.leftLegPivot);
+      const leftLegMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.085, 0.48, 8), jeansMat);
+      leftLegMesh.position.y = -0.24;
+      player.leftLegPivot.add(leftLegMesh);
+
+      player.rightLegPivot.position.set(0.15, 0.48, 0);
+      player.bodyPivot.add(player.rightLegPivot);
+      const rightLegMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.085, 0.48, 8), jeansMat);
+      rightLegMesh.position.y = -0.24;
+      player.rightLegPivot.add(rightLegMesh);
+
+      g.position.set(player.x, 0, player.z);
+      g.rotation.y = player.rotY;
+      scene.add(g);
+    }
+    buildExpressiveTechEngineerChibi();
+
+    function setPlayerFacialExpression(mode) {
+      player.expression = mode;
+      const isClosedOrHappy = mode === 'happy' || mode === 'pray' || mode === 'blink';
+      player.leftEyeOpen.visible = !isClosedOrHappy;
+      player.rightEyeOpen.visible = !isClosedOrHappy;
+      player.leftEyeHappy.visible = isClosedOrHappy;
+      player.rightEyeHappy.visible = isClosedOrHappy;
+      player.mouthCalm.visible = mode !== 'happy';
+      player.mouthSmile.visible = mode === 'happy';
+    }
+
+    /* ==========================================================================
+       7. ĐỒNG NGHIỆP & CHUYÊN GIA AI (48 NPC TRAO ĐỔI INFRA, SECURITY, POLICY)
+       ========================================================================== */
+    const AI_COUNT = 48;
+    const aiTorsoGeo = new THREE.CylinderGeometry(0.24, 0.34, 0.76, 8);
+    const aiHeadGeo = new THREE.SphereGeometry(0.27, 10, 10);
+    const aiHatGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.12, 10);
+    const aiLimbGeo = new THREE.CylinderGeometry(0.068, 0.06, 0.44, 6);
+
+    const aiMatBody = new THREE.MeshStandardMaterial({ roughness: 0.6 });
+    const aiMatHead = new THREE.MeshStandardMaterial({ color: 0xffe0bd, roughness: 0.55 });
+    const aiMatHat = new THREE.MeshStandardMaterial({ roughness: 0.6 });
+    const aiMatLegs = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.75 });
+
+    const aiBodyInstanced = new THREE.InstancedMesh(aiTorsoGeo, aiMatBody, AI_COUNT);
+    const aiHeadInstanced = new THREE.InstancedMesh(aiHeadGeo, aiMatHead, AI_COUNT);
+    const aiHatInstanced = new THREE.InstancedMesh(aiHatGeo, aiMatHat, AI_COUNT);
+    const aiLeftArmInstanced = new THREE.InstancedMesh(aiLimbGeo, aiMatBody, AI_COUNT);
+    const aiRightArmInstanced = new THREE.InstancedMesh(aiLimbGeo, aiMatBody, AI_COUNT);
+    const aiLeftLegInstanced = new THREE.InstancedMesh(aiLimbGeo, aiMatLegs, AI_COUNT);
+    const aiRightLegInstanced = new THREE.InstancedMesh(aiLimbGeo, aiMatLegs, AI_COUNT);
+
+    aiBodyInstanced.castShadow = true;
+    scene.add(
+      aiBodyInstanced,
+      aiHeadInstanced,
+      aiHatInstanced,
+      aiLeftArmInstanced,
+      aiRightArmInstanced,
+      aiLeftLegInstanced,
+      aiRightLegInstanced
+    );
+
+    const AI_COLORS = [
+      0x0ea5e9, 0x10b981, 0xf59e0b, 0x6366f1, 0xec4899, 0x14b8a6, 0x8b5cf6, 0x3b82f6
+    ];
+    const AI_HAT_COLORS = [
+      0x1e293b, 0x334155, 0x0284c7, 0x059669, 0x475569
+    ];
+
+    const AI_WISH_QUOTES = [
+      '🖧 Đặt Database vào Private Subnet giúp bảo vệ dữ liệu an toàn hơn hẳn!',
+      '🛡️ Nhớ bật MFA và áp dụng Zero Trust cho mọi tài khoản quản trị nhé!',
+      '📜 Chính sách Least Privilege: Chỉ cấp đúng quyền cần thiết để làm việc!',
+      '💾 Quy tắc sao lưu 3-2-1 giúp tụi mình luôn yên tâm về RPO và RTO!',
+      '🔍 Quét SAST & Secret Scan trên CI/CD vừa giúp phát hiện sớm 1 khóa API bị lộ!',
+      '📋 Mọi thay đổi lên Production đều cần qua Change Management và có Rollback Plan!',
+      '🔐 Mã hóa TLS 1.3 trên đường truyền và AES-256 cho ổ cứng lưu trữ!',
+      '🤝 Họp Blameless Post-Mortem giúp cả đội tìm ra bài học quý mà không đổ lỗi!',
+      '⚡ Cân bằng tải Multi-AZ giúp hệ thống đạt chuẩn High Availability 99.99%!'
+    ];
+
+    const aiAgents = [];
+    const dummyMatrix = new THREE.Matrix4();
+    const dummyPos = new THREE.Vector3();
+    const dummyQuat = new THREE.Quaternion();
+    const dummyScale = new THREE.Vector3();
+    const dummyEuler = new THREE.Euler();
+    const tempColor = new THREE.Color();
+
+    for (let i = 0; i < AI_COUNT; i++) {
+      const roleRoll = i % 6;
+      const scale = roleRoll === 0 ? 0.78 : (roleRoll === 1 ? 0.94 : 1.0);
+      const hasCap = (i % 2 === 0);
+      let behavior = 'walk';
+      let x = (Math.random() - 0.5) * 18;
+      let z = -6 + Math.random() * 22;
+      let rotY = Math.random() * Math.PI * 2;
+
+      if (i < 10) {
+        behavior = 'pray_hall';
+        x = (Math.random() - 0.5) * 7.5;
+        z = -6.2 - Math.random() * 2.5;
+        rotY = Math.PI;
+      } else if (i < 17) {
+        behavior = 'incense';
+        const ang = (i / 7) * Math.PI * 2;
+        x = Math.cos(ang) * 2.8;
+        z = -2.0 + Math.sin(ang) * 2.8;
+        rotY = Math.atan2(-x, -2.0 - z);
+      } else if (i < 24) {
+        behavior = 'chant_sit';
+        x = -4.5 + (i % 4) * 3.0;
+        z = -11.5 - Math.floor((i - 17) / 4) * 1.8;
+        rotY = Math.PI;
+      } else if (i < 31) {
+        behavior = 'photo';
+        x = 6.5 + (Math.random() - 0.5) * 2.5;
+        z = 2.5 + (Math.random() - 0.5) * 4.0;
+        rotY = Math.PI * 0.5;
+      }
+
+      aiAgents.push({
+        x,
+        z,
+        targetX: (Math.random() - 0.5) * 16,
+        targetZ: -5 + Math.random() * 20,
+        rotY,
+        scale,
+        hasCap,
+        behavior,
+        phase: Math.random() * 10,
+        greetTimer: 0
+      });
+
+      tempColor.setHex(AI_COLORS[i % AI_COLORS.length]);
+      aiBodyInstanced.setColorAt(i, tempColor);
+      aiLeftArmInstanced.setColorAt(i, tempColor);
+      aiRightArmInstanced.setColorAt(i, tempColor);
+
+      tempColor.setHex(AI_HAT_COLORS[i % AI_HAT_COLORS.length]);
+      aiHatInstanced.setColorAt(i, tempColor);
+    }
+    if (aiBodyInstanced.instanceColor) aiBodyInstanced.instanceColor.needsUpdate = true;
+    if (aiLeftArmInstanced.instanceColor) aiLeftArmInstanced.instanceColor.needsUpdate = true;
+    if (aiRightArmInstanced.instanceColor) aiRightArmInstanced.instanceColor.needsUpdate = true;
+    if (aiHatInstanced.instanceColor) aiHatInstanced.instanceColor.needsUpdate = true;
+
+    const aiBubbleSlots = [];
+    for (let i = 0; i < 4; i++) {
+      const bEl = document.createElement('div');
+      bEl.className = 'ai-bubble';
+      bEl.textContent = AI_WISH_QUOTES[i];
+      bubblesContainer.appendChild(bEl);
+      aiBubbleSlots.push({
+        el: bEl,
+        agentIndex: (i * 9 + 3) % AI_COUNT,
+        timer: i * 1.8
+      });
+    }
+
+    function triggerEngineerGroupArrival() {
+      const groupSize = 12 + Math.floor(Math.random() * 5);
+      visitorCounter += groupSize;
+      const counterEl = document.getElementById('visitor-count-num');
+      if (counterEl) counterEl.textContent = String(visitorCounter);
+
+      for (let i = 31; i < Math.min(AI_COUNT, 31 + groupSize); i++) {
+        const ag = aiAgents[i];
+        ag.x = -3.0 + ((i - 31) % 4) * 1.8;
+        ag.z = 20.5 + Math.floor((i - 31) / 4) * 1.3;
+        ag.targetX = (Math.random() - 0.5) * 12;
+        ag.targetZ = -1 + Math.random() * 11;
+        ag.behavior = 'walk';
+      }
+    }
+    setInterval(triggerEngineerGroupArrival, 22000);
+
+    /* ==========================================================================
+       8. ĐIỀU KHIỂN NHÂN VẬT, CỬ CHỈ TƯƠNG TÁC & KHO TRI THỨC (INFRA/SEC/POLICY)
+       ========================================================================== */
+    const keysPressed = { w: false, a: false, s: false, d: false, up: false, down: false, left: false, right: false };
+    const joystickState = { active: false, dx: 0, dy: 0, pointerId: null };
+    let cameraYaw = 0;
+    let cameraPitch = 0.32;
+    let activeCameraFocus = null;
+    let currentNearestZone = null;
+
+    let skyLightingMode = 0;
+    document.getElementById('btn-cycle-sky').addEventListener('click', () => {
+      skyLightingMode = (skyLightingMode + 1) % 4;
+      const labels = ['Tự động chuyển cảnh', 'Ban ngày nắng sáng', 'Hoàng hôn ấm áp', 'Đêm sáng tạo R&D'];
+      showToast(`☀️ Ánh sáng: ${labels[skyLightingMode]}`);
+    });
+
+    // Mở Kho Tri Thức (Infra • Security • Policy) & Quiz thực chiến
+    let currentQuizIndex = 0;
+    function renderPracticalQuiz() {
+      const q = PRACTICAL_QUIZZES[currentQuizIndex % PRACTICAL_QUIZZES.length];
+      document.getElementById('quiz-topic-badge').textContent = q.topic;
+      document.getElementById('quiz-question-text').textContent = q.question;
+      const optsContainer = document.getElementById('quiz-options-container');
+      const expBox = document.getElementById('quiz-explanation-box');
+      expBox.classList.add('hidden');
+      optsContainer.innerHTML = '';
+
+      q.options.forEach((optText, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-option-btn';
+        btn.textContent = optText;
+        btn.addEventListener('click', () => {
+          optsContainer.querySelectorAll('.quiz-option-btn').forEach((b, bIdx) => {
+            b.disabled = true;
+            if (bIdx === q.correct) b.classList.add('correct');
+          });
+          if (idx === q.correct) {
+            btn.classList.add('correct');
+            audio.playChimeSuccess();
+            saveState.bestTamAn = Math.min(100, saveState.bestTamAn + 10);
+            saveDataToStorage();
+            expBox.textContent = `✅ ${q.explanation} (+10 XP Kinh nghiệm!)`;
+            showToast('🎉 Giải quyết tình huống chuẩn xác! (+10 XP)');
+          } else {
+            btn.classList.add('wrong');
+            audio.playMechanicalKeyClick(0.5, 0.8);
+            expBox.textContent = `💡 Gợi ý: ${q.explanation}`;
+          }
+          expBox.classList.remove('hidden');
+        });
+        optsContainer.appendChild(btn);
+      });
+    }
+
+    document.getElementById('btn-open-knowledge').addEventListener('click', () => {
+      renderPracticalQuiz();
+      document.getElementById('modal-knowledge').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-close-knowledge').addEventListener('click', () => {
+      document.getElementById('modal-knowledge').classList.add('hidden');
+    });
+
+    document.getElementById('btn-next-quiz').addEventListener('click', () => {
+      currentQuizIndex = (currentQuizIndex + 1) % PRACTICAL_QUIZZES.length;
+      renderPracticalQuiz();
+    });
+
+    document.querySelectorAll('.kb-tab-btn').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        document.querySelectorAll('.kb-tab-btn').forEach((b) => b.classList.remove('active'));
+        tabBtn.classList.add('active');
+        const target = tabBtn.getAttribute('data-kbtab');
+        document.getElementById('kb-panel-infra').classList.toggle('hidden', target !== 'infra');
+        document.getElementById('kb-panel-security').classList.toggle('hidden', target !== 'security');
+        document.getElementById('kb-panel-policy').classList.toggle('hidden', target !== 'policy');
+        document.getElementById('kb-panel-quiz').classList.toggle('hidden', target !== 'quiz');
+        if (target === 'quiz') renderPracticalQuiz();
+      });
+    });
+
+    document.querySelectorAll('.btn-emote').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-emote');
+        player.bowTimer = 0;
+        player.waveTimer = 0;
+        player.meditateTimer = 0;
+        player.joyTimer = 0;
+        player.handTabletProp.visible = false;
+        player.handLaptopProp.visible = false;
+        player.handCardProp.visible = false;
+
+        if (type === 'bow') {
+          player.bowTimer = 3.0;
+          setPlayerFacialExpression('happy');
+          showToast('🤝 Cúi chào & cảm ơn đồng nghiệp đã chia sẻ kinh nghiệm');
+        } else if (type === 'wave') {
+          player.waveTimer = 3.2;
+          setPlayerFacialExpression('happy');
+          let greeted = 0;
+          for (let i = 0; i < AI_COUNT; i++) {
+            const ag = aiAgents[i];
+            if (Math.hypot(ag.x - player.x, ag.z - player.z) < 5.5) {
+              ag.rotY = Math.atan2(player.x - ag.x, player.z - ag.z);
+              ag.greetTimer = 3.0;
+              greeted++;
+            }
+          }
+          if (greeted > 0 && aiBubbleSlots[0]) {
+            aiBubbleSlots[0].el.textContent = '👋 Chào bạn! Cùng thảo luận về Zero Trust & Multi-AZ nhé!';
+          }
+          showToast('😊 Vẫy tay kết nối cùng các kỹ sư trong khuôn viên');
+        } else if (type === 'meditate') {
+          player.meditateTimer = 5.0;
+          player.handTabletProp.visible = true;
+          setPlayerFacialExpression('pray');
+          audio.playPipelineChime(0.35, 2.5);
+          showToast('💻 Đang tập trung đọc tài liệu Security & IT Policy...');
+        } else if (type === 'joy') {
+          player.joyTimer = 3.0;
+          setPlayerFacialExpression('happy');
+          audio.playChimeSuccess();
+          showToast('🎉 Tuyệt vời! Hệ thống đạt chuẩn Bảo mật & High Availability!');
+        }
+      });
+    });
+
+    let tutorialStep = saveState.tutorialDone ? 4 : 1;
+    const tutorialBanner = document.getElementById('tutorial-banner');
+
+    function updateTutorialUI() {
+      if (tutorialStep >= 4 || saveState.tutorialDone) {
+        tutorialBanner.classList.add('hidden');
+        return;
+      }
+      tutorialBanner.classList.remove('hidden');
+      document.getElementById('tut-step-1').classList.toggle('active', tutorialStep === 1);
+      document.getElementById('tut-step-2').classList.toggle('active', tutorialStep === 2);
+      document.getElementById('tut-step-3').classList.toggle('active', tutorialStep === 3);
+
+      const statusEl = document.getElementById('tut-status-text');
+      if (tutorialStep === 1) {
+        statusEl.textContent = 'Bước 1/3: Dùng cần gạt góc trái hoặc phím WASD / Mũi tên để di chuyển.';
+      } else if (tutorialStep === 2) {
+        statusEl.textContent = 'Bước 2/3: Đi tới gần một vòng sáng xanh lá tại các trạm kỹ thuật.';
+      } else if (tutorialStep === 3) {
+        statusEl.textContent = 'Bước 3/3: Chạm nút hành động góc dưới bên phải để giải quyết bài toán & nhận XP!';
+      }
+    }
+
+    function completeTutorialStep(stepNum) {
+      if (saveState.tutorialDone) return;
+      if (tutorialStep === stepNum) {
+        tutorialStep = stepNum + 1;
+        if (tutorialStep >= 4) {
+          saveState.tutorialDone = true;
+          saveDataToStorage();
+        }
+        updateTutorialUI();
+      }
+    }
+
+    document.getElementById('btn-skip-tutorial').addEventListener('click', () => {
+      saveState.tutorialDone = true;
+      tutorialStep = 4;
+      saveDataToStorage();
+      updateTutorialUI();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'w') keysPressed.w = true;
+      if (k === 's') keysPressed.s = true;
+      if (k === 'a') keysPressed.a = true;
+      if (k === 'd') keysPressed.d = true;
+      if (e.key === 'ArrowUp') keysPressed.up = true;
+      if (e.key === 'ArrowDown') keysPressed.down = true;
+      if (e.key === 'ArrowLeft') keysPressed.left = true;
+      if (e.key === 'ArrowRight') keysPressed.right = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'w') keysPressed.w = false;
+      if (k === 's') keysPressed.s = false;
+      if (k === 'a') keysPressed.a = false;
+      if (k === 'd') keysPressed.d = false;
+      if (e.key === 'ArrowUp') keysPressed.up = false;
+      if (e.key === 'ArrowDown') keysPressed.down = false;
+      if (e.key === 'ArrowLeft') keysPressed.left = false;
+      if (e.key === 'ArrowRight') keysPressed.right = false;
+    });
+
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickKnob = document.getElementById('joystick-knob');
+
+    function updateJoystickPosition(clientX, clientY) {
+      const rect = joystickZone.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const maxR = rect.width * 0.36;
+      let dx = clientX - cx;
+      let dy = clientY - cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist > maxR) {
+        dx = (dx / dist) * maxR;
+        dy = (dy / dist) * maxR;
+      }
+      joystickKnob.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
+      joystickState.dx = dx / maxR;
+      joystickState.dy = dy / maxR;
+    }
+
+    joystickZone.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      joystickState.active = true;
+      joystickState.pointerId = e.pointerId;
+      joystickZone.setPointerCapture(e.pointerId);
+      updateJoystickPosition(e.clientX, e.clientY);
+    });
+
+    joystickZone.addEventListener('pointermove', (e) => {
+      if (!joystickState.active || e.pointerId !== joystickState.pointerId) return;
+      updateJoystickPosition(e.clientX, e.clientY);
+    });
+
+    function resetJoystick() {
+      joystickState.active = false;
+      joystickState.pointerId = null;
+      joystickState.dx = 0;
+      joystickState.dy = 0;
+      joystickKnob.style.transform = 'translate(0px, 0px)';
+    }
+    joystickZone.addEventListener('pointerup', resetJoystick);
+    joystickZone.addEventListener('pointercancel', resetJoystick);
+
+    let isDraggingCamera = false;
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      isDraggingCamera = true;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDraggingCamera) return;
+      const dx = e.clientX - lastPointerX;
+      const dy = e.clientY - lastPointerY;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      cameraYaw -= dx * 0.0065;
+      cameraPitch = Math.max(0.15, Math.min(0.85, cameraPitch + dy * 0.0045));
+    });
+
+    window.addEventListener('pointerup', () => {
+      isDraggingCamera = false;
+    });
+
+    document.querySelectorAll('.chip-nav').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-goto');
+        const zObj = ACTIVITY_ZONES.find((z) => z.id === targetId);
+        if (zObj) {
+          player.x = zObj.x;
+          player.z = zObj.z + 0.9;
+          player.rotY = Math.PI;
+          player.group.position.set(player.x, 0, player.z);
+          completeTutorialStep(1);
+          completeTutorialStep(2);
+          showToast(`Đã đi tới ${zObj.label}`);
+        }
+      });
+    });
+
+    /* ==========================================================================
+       9. 5 NHIỆM VỤ GIẢI QUYẾT VẤN ĐỀ HẠ TẦNG, SECURITY & POLICY
+       ========================================================================== */
+    const btnProximityAction = document.getElementById('btn-proximity-action');
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast-message');
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2800);
+    }
+
+    function updateHudStats() {
+      document.getElementById('hud-player-name').textContent = saveState.playerName;
+      document.getElementById('hud-incense-count').textContent = String(saveState.incenseCount);
+      document.getElementById('hud-taman-score').textContent = String(saveState.bestTamAn);
+      document.getElementById('visitor-count-num').textContent = String(visitorCounter);
+    }
+
+    function openActivityById(zoneId) {
+      completeTutorialStep(3);
+      if (zoneId === 'incense') {
+        player.x = 0;
+        player.z = 0.65;
+        player.rotY = Math.PI;
+        player.group.position.set(player.x, 0, player.z);
+        player.group.rotation.y = player.rotY;
+        player.handTabletProp.visible = true;
+        setPlayerFacialExpression('pray');
+        activeCameraFocus = { pos: new THREE.Vector3(2.2, 3.2, 3.8), look: new THREE.Vector3(0, 1.6, -1.2) };
+        document.getElementById('incense-progress-box').classList.add('hidden');
+        document.getElementById('modal-incense').classList.remove('hidden');
+      } else if (zoneId === 'bell') {
+        player.x = -9.2;
+        player.z = -3.8;
+        player.rotY = -Math.PI * 0.6;
+        player.group.position.set(player.x, 0, player.z);
+        player.group.rotation.y = player.rotY;
+        activeCameraFocus = { pos: new THREE.Vector3(-5.8, 4.2, -1.2), look: new THREE.Vector3(-10.8, 3.2, -4.5) };
+        startBellMiniGame();
+        document.getElementById('modal-bell').classList.remove('hidden');
+      } else if (zoneId === 'chant') {
+        player.x = -2.2;
+        player.z = -9.6;
+        player.rotY = Math.PI;
+        player.group.position.set(player.x, 0, player.z);
+        player.group.rotation.y = player.rotY;
+        player.meditateTimer = 35;
+        player.handLaptopProp.visible = true;
+        setPlayerFacialExpression('pray');
+        activeCameraFocus = { pos: new THREE.Vector3(0.4, 3.4, -6.2), look: new THREE.Vector3(-1.2, 2.2, -12.5) };
+        resetChantMiniGameUI();
+        document.getElementById('modal-chant').classList.remove('hidden');
+      } else if (zoneId === 'wish') {
+        player.handCardProp.visible = true;
+        setPlayerFacialExpression('happy');
+        activeCameraFocus = { pos: new THREE.Vector3(-5.0, 4.3, 11.2), look: new THREE.Vector3(-10.8, 3.5, 6.2) };
+        document.getElementById('modal-wish').classList.remove('hidden');
+      } else if (zoneId === 'fortune') {
+        player.x = 2.8;
+        player.z = -9.6;
+        player.rotY = Math.PI;
+        player.group.position.set(player.x, 0, player.z);
+        player.group.rotation.y = player.rotY;
+        activeCameraFocus = { pos: new THREE.Vector3(4.5, 3.5, -6.2), look: new THREE.Vector3(2.8, 2.0, -11.3) };
+        resetFortuneModalUI();
+        document.getElementById('modal-fortune').classList.remove('hidden');
+      }
+    }
+
+    btnProximityAction.addEventListener('click', () => {
+      if (currentNearestZone) {
+        openActivityById(currentNearestZone.id);
+      }
+    });
+
+    document.getElementById('input-player-name').value = saveState.playerName;
+    document.getElementById('btn-enter-temple').addEventListener('click', () => {
+      const nameInput = document.getElementById('input-player-name').value.trim();
+      if (nameInput && !containsProfanity(nameInput)) {
+        saveState.playerName = nameInput;
+      }
+      saveDataToStorage();
+      audio.initAndStart();
+      audio.playPipelineChime(0.5, 2.8);
+      document.getElementById('welcome-modal').classList.add('hidden');
+      player.waveTimer = 2.4;
+      setPlayerFacialExpression('happy');
+      updateTutorialUI();
+    });
+
+    const btnToggleAudio = document.getElementById('btn-toggle-audio');
+    btnToggleAudio.addEventListener('click', () => {
+      const isMuted = audio.toggleMute();
+      btnToggleAudio.textContent = isMuted ? '🔇 Đã tắt' : '🔊 Âm thanh';
+    });
+
+    // --- Nhiệm vụ 1: Hạ Tầng Server, VPC Subnet, WAF & Backup 3-2-1 ---
+    let selectedServerNodes = 1;
+    const choiceIncense1 = document.getElementById('choice-incense-1');
+    const choiceIncense3 = document.getElementById('choice-incense-3');
+
+    choiceIncense1.addEventListener('click', () => {
+      selectedServerNodes = 1;
+      choiceIncense1.classList.add('selected');
+      choiceIncense3.classList.remove('selected');
+    });
+    choiceIncense3.addEventListener('click', () => {
+      selectedServerNodes = 3;
+      choiceIncense3.classList.add('selected');
+      choiceIncense1.classList.remove('selected');
+    });
+
+    document.getElementById('btn-do-incense').addEventListener('click', () => {
+      player.bowTimer = 3.2;
+      player.handTabletProp.visible = true;
+      setPlayerFacialExpression('happy');
+      spawnPlayerServerNodes(selectedServerNodes);
+      saveState.incenseCount += selectedServerNodes;
+      visitorCounter += 1;
+      saveDataToStorage();
+      audio.playChimeSuccess();
+
+      const box = document.getElementById('incense-progress-box');
+      box.classList.remove('hidden');
+      document.getElementById('incense-status-title').textContent =
+        selectedServerNodes === 1
+          ? 'Đã bật VPC Private Subnet + Tường lửa WAF + Redis Cache!'
+          : 'Đã kích hoạt 3 Cụm Multi-AZ HA + Cân bằng tải + Sao lưu 3-2-1!';
+      showToast(`🖧 Đã nâng cấp Hạ tầng & Bảo mật mạng (+${selectedServerNodes} Node)`);
+    });
+
+    document.getElementById('btn-close-incense').addEventListener('click', () => {
+      activeCameraFocus = null;
+      player.handTabletProp.visible = false;
+      setPlayerFacialExpression('calm');
+      document.getElementById('modal-incense').classList.add('hidden');
+    });
+
+    // --- Nhiệm vụ 2: Đồng Bộ Cổng DevSecOps CI/CD ---
+    let bellActive = false;
+    let bellPhase = 0;
+    let bellStrikes = 0;
+    let bellSwingTimer = 0;
+    const DEVSECOPS_GATE_NAMES = [
+      'Cổng 1/3: Quét mã nguồn SAST & Secret Scan hoàn tất!',
+      'Cổng 2/3: Kiểm tra chính sách IAM Least Privilege & Container Non-Root Pass!',
+      'Cổng 3/3: Triển khai Canary Zero-Downtime & Bật giám sát SLA thành công!'
+    ];
+
+    function startBellMiniGame() {
+      bellActive = true;
+      bellPhase = 0;
+      bellStrikes = 0;
+      document.getElementById('bell-strike-count').textContent = '0 / 3';
+      document.getElementById('bell-feedback-text').textContent = 'Chạm 🛡️ đúng lúc vòng xanh dương khớp vòng xanh lá!';
+    }
+
+    document.getElementById('btn-strike-bell').addEventListener('click', () => {
+      if (!bellActive) startBellMiniGame();
+      const ringSize = 180 - bellPhase * 126;
+      const diff = Math.abs(ringSize - 96);
+      bellStrikes = Math.min(3, bellStrikes + 1);
+      document.getElementById('bell-strike-count').textContent = `${bellStrikes} / 3`;
+      bellSwingTimer = 1.1;
+      player.bowTimer = 1.4;
+
+      if (diff <= 22) {
+        audio.playPipelineChime(0.85, 3.8);
+        setPlayerFacialExpression('happy');
+        document.getElementById('bell-feedback-text').textContent = `✅ ${DEVSECOPS_GATE_NAMES[bellStrikes - 1]}`;
+        document.body.classList.remove('screen-bell-shake');
+        void document.body.offsetWidth;
+        document.body.classList.add('screen-bell-shake');
+        if (cicdShockwaveRing) {
+          cicdShockwaveRing.scale.set(1, 1, 1);
+          cicdShockwaveRing.material.opacity = 0.92;
+        }
+      } else if (diff <= 42) {
+        audio.playPipelineChime(0.55, 2.5);
+        document.getElementById('bell-feedback-text').textContent = `🛡️ Đã duyệt: ${DEVSECOPS_GATE_NAMES[bellStrikes - 1]}`;
+      } else {
+        audio.playPipelineChime(0.3, 1.4);
+        document.getElementById('bell-feedback-text').textContent = 'Hơi sớm/muộn — hãy canh vòng sáng sát vòng mục tiêu để duyệt cổng Security nhé!';
+      }
+      bellPhase = 0;
+    });
+
+    document.getElementById('btn-reset-bell').addEventListener('click', startBellMiniGame);
+    document.getElementById('btn-close-bell').addEventListener('click', () => {
+      bellActive = false;
+      activeCameraFocus = null;
+      setPlayerFacialExpression('calm');
+      document.getElementById('modal-bell').classList.add('hidden');
+    });
+
+    // --- Nhiệm vụ 3: Luyện Clean Code, OWASP Security & Policy (30 giây) ---
+    const CHANT_VERSES = [
+      '"[OWASP] Luôn dùng Parameterized Query để triệt tiêu hoàn toàn nguy cơ SQL Injection..."',
+      '"[Security] Không bao giờ lưu mật khẩu hay API Key trong Git; hãy dùng Secret Vault..."',
+      '"[Policy] Áp dụng nguyên tắc Least Privilege: Chỉ cấp đúng quyền IAM tối thiểu cần thiết..."',
+      '"[Infra] Thiết kế dịch vụ Stateless và đặt Database trong Private Subnet nội bộ..."',
+      '"[Policy] Mọi bản cập nhật lên Production đều phải có Change Request và Rollback Plan..."'
+    ];
+
+    let chantRunning = false;
+    let chantTimeLeft = 30;
+    let chantRingPhase = 0;
+    let chantScoreFloat = 0;
+    let chantIntervalId = null;
+    let playerTapKeyboardAnim = 0;
+
+    function resetChantMiniGameUI() {
+      chantRunning = false;
+      clearInterval(chantIntervalId);
+      chantTimeLeft = 30;
+      chantRingPhase = 0;
+      chantScoreFloat = 0;
+      document.getElementById('chant-timer-num').textContent = '30';
+      document.getElementById('chant-live-score').textContent = '0';
+      document.getElementById('chant-rating-pill').textContent = 'Nhấn "Bắt đầu 30s" hoặc chạm vào bàn phím ⌨️';
+      document.getElementById('chant-summary-box').classList.add('hidden');
+    }
+
+    function startChantSession() {
+      resetChantMiniGameUI();
+      chantRunning = true;
+      player.meditateTimer = 35;
+      player.handLaptopProp.visible = true;
+      setPlayerFacialExpression('pray');
+      document.getElementById('chant-rating-pill').textContent = 'Canh vòng sáng khớp vòng mục tiêu rồi gõ ⌨️';
+      chantIntervalId = setInterval(() => {
+        if (!chantRunning) return;
+        chantTimeLeft -= 1;
+        document.getElementById('chant-timer-num').textContent = String(Math.max(0, chantTimeLeft));
+        const verseIdx = Math.floor((30 - chantTimeLeft) / 6) % CHANT_VERSES.length;
+        document.getElementById('chant-verse-line').textContent = CHANT_VERSES[verseIdx];
+
+        if (chantTimeLeft <= 0) {
+          finishChantSession();
+        }
+      }, 1000);
+    }
+
+    function finishChantSession() {
+      chantRunning = false;
+      clearInterval(chantIntervalId);
+      const finalScore = Math.min(100, Math.round(chantScoreFloat));
+      if (finalScore > saveState.bestTamAn) {
+        saveState.bestTamAn = finalScore;
+        saveDataToStorage();
+      }
+      audio.playChimeSuccess();
+      setPlayerFacialExpression('happy');
+
+      let praise = 'Bạn đã rèn luyện được thói quen rà soát bảo mật và viết code cẩn thận, hãy tiếp tục phát huy nhé!';
+      if (finalScore >= 85) {
+        praise = 'Xuất sắc! Hệ thống của bạn vừa sạch gọn (Clean Code), vừa tuân thủ chặt chẽ chuẩn bảo mật OWASP & IT Policy.';
+      } else if (finalScore >= 60) {
+        praise = 'Rất tốt! Bạn nắm vững các nguyên tắc phòng thủ chiều sâu và phân quyền an toàn.';
+      }
+
+      document.getElementById('chant-final-score-line').textContent = `Điểm Kinh Nghiệm: ${finalScore} / 100 XP`;
+      document.getElementById('chant-praise-line').textContent = praise;
+      document.getElementById('chant-summary-box').classList.remove('hidden');
+      showToast(`🎉 Hoàn thành rà soát Clean Code & Security! Điểm XP: ${finalScore}/100`);
+    }
+
+    document.getElementById('btn-start-chant').addEventListener('click', startChantSession);
+
+    document.getElementById('btn-tap-muyu').addEventListener('click', () => {
+      if (!chantRunning) {
+        startChantSession();
+      }
+      const ringSize = 180 - chantRingPhase * 126;
+      const diff = Math.abs(ringSize - 96);
+
+      playerTapKeyboardAnim = 1.0;
+      if (mechanicalKeyboard3D) {
+        mechanicalKeyboard3D.scale.set(1.25, 0.75, 1.2);
+      }
+
+      if (diff <= 24) {
+        audio.playMechanicalKeyClick(0.75, 1.05);
+        chantScoreFloat = Math.min(100, chantScoreFloat + 6.5);
+        document.getElementById('chant-rating-pill').textContent = '🛡️ Chuẩn OWASP & Clean Code (+7 XP)';
+      } else if (diff <= 46) {
+        audio.playMechanicalKeyClick(0.55, 0.96);
+        chantScoreFloat = Math.min(100, chantScoreFloat + 4.0);
+        document.getElementById('chant-rating-pill').textContent = '✨ Hợp chuẩn Policy (+4 XP)';
+      } else {
+        audio.playMechanicalKeyClick(0.35, 0.85);
+        chantScoreFloat = Math.min(100, chantScoreFloat + 1.0);
+        document.getElementById('chant-rating-pill').textContent = '🔧 Cần rà soát thêm (+1 XP)';
+      }
+      document.getElementById('chant-live-score').textContent = String(Math.min(100, Math.round(chantScoreFloat)));
+      chantRingPhase = 0;
+    });
+
+    document.getElementById('btn-close-chant').addEventListener('click', () => {
+      chantRunning = false;
+      clearInterval(chantIntervalId);
+      player.meditateTimer = 0;
+      player.handLaptopProp.visible = false;
+      setPlayerFacialExpression('calm');
+      activeCameraFocus = null;
+      document.getElementById('modal-chant').classList.add('hidden');
+    });
+
+    // --- Nhiệm vụ 4: Đóng Góp Quy Chuẩn Policy, Security & Hạ Tầng ---
+    let selectedWishType = 'ribbon';
+    const inputWishText = document.getElementById('input-wish-text');
+    const wishCharCount = document.getElementById('wish-char-count');
+    const wishFilterWarning = document.getElementById('wish-filter-warning');
+    const choiceRibbon = document.getElementById('choice-wish-ribbon');
+    const choiceLantern = document.getElementById('choice-wish-lantern');
+
+    inputWishText.addEventListener('input', () => {
+      wishCharCount.textContent = String(inputWishText.value.length);
+      wishFilterWarning.textContent = '';
+    });
+
+    document.querySelectorAll('.wish-chip:not(.fortune-cat-btn)').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        inputWishText.value = chip.getAttribute('data-wish') || '';
+        wishCharCount.textContent = String(inputWishText.value.length);
+        wishFilterWarning.textContent = '';
+      });
+    });
+
+    choiceRibbon.addEventListener('click', () => {
+      selectedWishType = 'ribbon';
+      choiceRibbon.classList.add('selected');
+      choiceLantern.classList.remove('selected');
+      activeCameraFocus = { pos: new THREE.Vector3(-5.0, 4.3, 11.2), look: new THREE.Vector3(-10.8, 3.5, 6.2) };
+    });
+
+    choiceLantern.addEventListener('click', () => {
+      selectedWishType = 'lantern';
+      choiceLantern.classList.add('selected');
+      choiceRibbon.classList.remove('selected');
+      activeCameraFocus = { pos: new THREE.Vector3(5.5, 4.2, 7.5), look: new THREE.Vector3(11.2, 1.0, 2.5) };
+    });
+
+    document.getElementById('btn-submit-wish').addEventListener('click', () => {
+      const rawWish = inputWishText.value.trim();
+      if (!rawWish) {
+        wishFilterWarning.textContent = 'Bạn hãy nhập một quy chuẩn Hạ tầng, Security hoặc Policy trước khi lưu nhé.';
+        return;
+      }
+      if (containsProfanity(rawWish)) {
+        wishFilterWarning.textContent = 'Môi trường học tập chuyên nghiệp, xin hãy dùng ngôn từ tích cực, lịch sự.';
+        return;
+      }
+
+      saveState.wishes.unshift({
+        text: rawWish.slice(0, 120),
+        type: selectedWishType,
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      });
+      saveDataToStorage();
+      audio.playChimeSuccess();
+      player.handCardProp.visible = false;
+      player.joyTimer = 2.6;
+      setPlayerFacialExpression('happy');
+
+      if (selectedWishType === 'ribbon') {
+        addPlayerCardToTechTree();
+        showToast('🏷️ Đã đính Thẻ Quy Chuẩn Policy lên Cây Tri Thức Số!');
+      } else {
+        spawnFloatingDataPodInPond(true, saveState.wishes.length);
+        showToast('💎 Đã thả Khối Dữ Liệu Mã Hóa xuống Hồ Quang Học!');
+      }
+
+      inputWishText.value = '';
+      wishCharCount.textContent = '0';
+      document.getElementById('modal-wish').classList.add('hidden');
+      activeCameraFocus = null;
+    });
+
+    document.getElementById('btn-close-wish').addEventListener('click', () => {
+      player.handCardProp.visible = false;
+      setPlayerFacialExpression('calm');
+      activeCameraFocus = null;
+      document.getElementById('modal-wish').classList.add('hidden');
+    });
+
+    // --- Nhiệm vụ 5: Rút Thẻ Cẩm Nang 60 Thẻ (Lọc theo Tất cả / INFRA / SECURITY / POLICY) ---
+    let selectedFortuneCat = 'all';
+    let shakeProgress = 0;
+    let isHoldingShake = false;
+    let fortuneRevealed = false;
+    const fortuneTubeBox = document.getElementById('fortune-tube-box');
+    const fortuneShakeBar = document.getElementById('fortune-shake-bar');
+    const fortuneResultCard = document.getElementById('fortune-result-card');
+
+    document.querySelectorAll('.fortune-cat-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        selectedFortuneCat = btn.getAttribute('data-cat') || 'all';
+        document.querySelectorAll('.fortune-cat-btn').forEach((b) => {
+          b.style.background = '#f0f9ff';
+          b.style.borderColor = '#38bdf8';
+        });
+        btn.style.background = '#bae6fd';
+        btn.style.borderColor = '#0284c7';
+        resetFortuneModalUI();
+      });
+    });
+
+    function resetFortuneModalUI() {
+      shakeProgress = 0;
+      isHoldingShake = false;
+      fortuneRevealed = false;
+      fortuneTubeBox.classList.remove('shaking');
+      fortuneShakeBar.style.width = '0%';
+      fortuneResultCard.classList.add('hidden');
+      document.getElementById('fortune-status-hint').textContent =
+        'Chạm giữ nút bên dưới (hoặc nhấn 1 lần) để rút thẻ kiến thức';
+    }
+
+    function revealRandomFortune() {
+      if (fortuneRevealed) return;
+      fortuneRevealed = true;
+      isHoldingShake = false;
+      fortuneTubeBox.classList.remove('shaking');
+      fortuneShakeBar.style.width = '100%';
+      audio.playChimeSuccess();
+      player.joyTimer = 2.5;
+      setPlayerFacialExpression('happy');
+
+      const filteredPool = selectedFortuneCat === 'all'
+        ? FORTUNE_BLESSINGS
+        : FORTUNE_BLESSINGS.filter((item) => item.cat === selectedFortuneCat);
+      const pool = filteredPool.length > 0 ? filteredPool : FORTUNE_BLESSINGS;
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      const globalIdx = FORTUNE_BLESSINGS.indexOf(chosen);
+      const stickNumber = String((globalIdx >= 0 ? globalIdx : 0) + 1).padStart(2, '0');
+
+      document.getElementById('fortune-stick-title').textContent = `CẨM NANG #${stickNumber} • ${chosen.title.toUpperCase()}`;
+      document.getElementById('fortune-blessing-text').textContent = chosen.text;
+      fortuneResultCard.classList.remove('hidden');
+      document.getElementById('fortune-status-hint').textContent = 'Đã rút được một thẻ kiến thức thực chiến!';
+
+      saveState.fortunes.unshift({
+        stickNumber,
+        title: chosen.title,
+        text: chosen.text
+      });
+      if (saveState.fortunes.length > 30) saveState.fortunes.pop();
+      saveDataToStorage();
+    }
+
+    const btnHoldShake = document.getElementById('btn-hold-shake');
+    btnHoldShake.addEventListener('pointerdown', () => {
+      if (fortuneRevealed) {
+        resetFortuneModalUI();
+      }
+      isHoldingShake = true;
+      fortuneTubeBox.classList.add('shaking');
+      shakeProgress = Math.min(100, shakeProgress + 36);
+      fortuneShakeBar.style.width = `${shakeProgress}%`;
+      audio.playCardShuffle();
+      if (shakeProgress >= 100) {
+        revealRandomFortune();
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      isHoldingShake = false;
+      fortuneTubeBox.classList.remove('shaking');
+    });
+
+    window.addEventListener('devicemotion', (e) => {
+      const modalFortune = document.getElementById('modal-fortune');
+      if (modalFortune.classList.contains('hidden') || fortuneRevealed) return;
+      const acc = e.accelerationIncludingGravity;
+      if (!acc) return;
+      const mag = Math.abs(acc.x || 0) + Math.abs(acc.y || 0) + Math.abs(acc.z || 0);
+      if (mag > 23) {
+        shakeProgress = Math.min(100, shakeProgress + 18);
+        fortuneShakeBar.style.width = `${shakeProgress}%`;
+        audio.playCardShuffle();
+        if (shakeProgress >= 100) {
+          revealRandomFortune();
+        }
+      }
+    });
+
+    document.getElementById('btn-close-fortune').addEventListener('click', () => {
+      isHoldingShake = false;
+      setPlayerFacialExpression('calm');
+      activeCameraFocus = null;
+      document.getElementById('modal-fortune').classList.add('hidden');
+    });
+
+    /* ==========================================================================
+       10. SỔ TAY KINH NGHIỆM & VẼ THẺ CHIA SẺ 1080×1350
+       ========================================================================== */
+    function renderNotebookModal() {
+      document.getElementById('input-notebook-name').value = saveState.playerName;
+      document.getElementById('nb-incense-count').textContent = String(saveState.incenseCount);
+      document.getElementById('nb-best-taman').textContent = `${saveState.bestTamAn} / 100`;
+      document.getElementById('nb-wishes-total').textContent = String(saveState.wishes.length);
+      document.getElementById('nb-fortunes-total').textContent = String(saveState.fortunes.length);
+
+      const wishesEl = document.getElementById('nb-wishes-list');
+      wishesEl.innerHTML = '';
+      if (saveState.wishes.length === 0) {
+        wishesEl.innerHTML = '<div class="notebook-item">Chưa có quy chuẩn nào được lưu.</div>';
+      } else {
+        saveState.wishes.forEach((w) => {
+          const row = document.createElement('div');
+          row.className = 'notebook-item';
+          const icon = w.type === 'lantern' ? '💎 Khối dữ liệu mã hóa' : '🏷️ Thẻ Policy/Infra';
+          row.textContent = `${icon}: "${w.text}"`;
+          wishesEl.appendChild(row);
+        });
+      }
+
+      const fortunesEl = document.getElementById('nb-fortunes-list');
+      fortunesEl.innerHTML = '';
+      if (saveState.fortunes.length === 0) {
+        fortunesEl.innerHTML = '<div class="notebook-item">Bạn chưa rút thẻ cẩm nang nào.</div>';
+      } else {
+        saveState.fortunes.forEach((f) => {
+          const row = document.createElement('div');
+          row.className = 'notebook-item';
+          row.textContent = `[#${f.stickNumber} - ${f.title}] ${f.text}`;
+          fortunesEl.appendChild(row);
+        });
+      }
+    }
+
+    document.getElementById('btn-open-notebook').addEventListener('click', () => {
+      renderNotebookModal();
+      document.getElementById('modal-notebook').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-save-name').addEventListener('click', () => {
+      const val = document.getElementById('input-notebook-name').value.trim();
+      if (val && !containsProfanity(val)) {
+        saveState.playerName = val;
+        saveDataToStorage();
+        showToast('Đã cập nhật tên trong Sổ tay kinh nghiệm');
+      }
+    });
+
+    document.getElementById('btn-close-notebook').addEventListener('click', () => {
+      document.getElementById('modal-notebook').classList.add('hidden');
+    });
+
+    document.getElementById('btn-notebook-to-share').addEventListener('click', () => {
+      document.getElementById('modal-notebook').classList.add('hidden');
+      openShareModal();
+    });
+
+    function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ');
+      let line = '';
+      let currY = y;
+      for (let n = 0; n < words.length; n++) {
+        const testLine = line + words[n] + ' ';
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && n > 0) {
+          ctx.fillText(line.trim(), x, currY);
+          line = words[n] + ' ';
+          currY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line.trim(), x, currY);
+      return currY + lineHeight;
+    }
+
+    function drawShareCard1080x1350() {
+      const shareCanvas = document.getElementById('share-card-canvas');
+      const ctx = shareCanvas.getContext('2d');
+      const W = 1080;
+      const H = 1350;
+
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      bgGrad.addColorStop(0, '#f0f9ff');
+      bgGrad.addColorStop(0.5, '#e0f2fe');
+      bgGrad.addColorStop(1, '#bae6fd');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 12;
+      ctx.strokeRect(32, 32, W - 64, H - 64);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(52, 52, W - 104, H - 104);
+
+      renderer.render(scene, camera);
+      try {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(80, 180, W - 160, 520, 26);
+        ctx.clip();
+        ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 80, 180, W - 160, 520);
+        ctx.restore();
+      } catch (err) {
+        // Fallback nếu không thể chụp canvas
+      }
+
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.roundRect(80, 180, W - 160, 520, 26);
+      ctx.stroke();
+
+      ctx.fillStyle = '#0369a1';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 46px "Segoe UI", sans-serif';
+      ctx.fillText('🛡️ HỒ SƠ KỸ SƯ: INFRA • SECURITY • POLICY', W / 2, 128);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 42px "Segoe UI", sans-serif';
+      ctx.fillText(`Kỹ sư: ${saveState.playerName}`, W / 2, 775);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+      ctx.beginPath();
+      ctx.roundRect(90, 815, W - 180, 240, 22);
+      ctx.fill();
+      ctx.strokeStyle = '#0ea5e9';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      const latestWish = (saveState.wishes[0] && saveState.wishes[0].text)
+        ? saveState.wishes[0].text
+        : '[Policy] Áp dụng nguyên tắc Đặc quyền tối thiểu (Least Privilege) & kiến trúc Zero Trust.';
+
+      ctx.fillStyle = '#0369a1';
+      ctx.font = 'italic bold 35px "Segoe UI", sans-serif';
+      wrapCanvasText(ctx, `"${latestWish}"`, W / 2, 895, W - 260, 50);
+
+      ctx.fillStyle = '#047857';
+      ctx.font = 'bold 39px "Segoe UI", sans-serif';
+      ctx.fillText(
+        `🧠 Kinh nghiệm: ${saveState.bestTamAn} / 100 XP   •   🖧 Hạ tầng tối ưu: ${saveState.incenseCount} Cụm`,
+        W / 2,
+        1145
+      );
+
+      ctx.fillStyle = '#334155';
+      ctx.font = 'bold 34px "Segoe UI", sans-serif';
+      ctx.fillText('Hành Trình Kỹ Sư IT 3D — Hạ Tầng, Bảo Mật & Chính Sách Thực Chiến', W / 2, 1245);
+    }
+
+    function openShareModal() {
+      drawShareCard1080x1350();
+      document.getElementById('modal-share').classList.remove('hidden');
+    }
+
+    document.getElementById('btn-open-share').addEventListener('click', openShareModal);
+    document.getElementById('btn-close-share').addEventListener('click', () => {
+      document.getElementById('modal-share').classList.add('hidden');
+    });
+
+    function downloadShareImage() {
+      const shareCanvas = document.getElementById('share-card-canvas');
+      const dataUrl = shareCanvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'ho-so-ky-su-it-1080x1350.png';
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('⬇️ Đã tải thẻ Hồ sơ Kỹ sư IT (1080×1350) về máy!');
+    }
+
+    document.getElementById('btn-download-share').addEventListener('click', downloadShareImage);
+
+    document.getElementById('btn-native-share').addEventListener('click', () => {
+      const shareCanvas = document.getElementById('share-card-canvas');
+      shareCanvas.toBlob(async (blob) => {
+        if (!blob) {
+          downloadShareImage();
+          return;
+        }
+        const file = new File([blob], 'ho-so-ky-su-it.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'Hành Trình Kỹ Sư IT 3D — Infra, Security & Policy',
+              text: `Hồ sơ học tập của ${saveState.playerName} (Điểm Kinh Nghiệm: ${saveState.bestTamAn}/100 XP)`,
+              files: [file]
+            });
+            showToast('✨ Đã chia sẻ thẻ Hồ sơ Kỹ sư IT!');
+          } catch (err) {
+            // Người dùng đóng bảng chia sẻ
+          }
+        } else {
+          downloadShareImage();
+        }
+      }, 'image/png');
+    });
+
+    /* ==========================================================================
+       11. VÒNG LẶP CẬP NHẬT CHUYỂN ĐỘNG, CỬ CHỈ NHÂN VẬT & ĐỒNG NGHIỆP AI
+       ========================================================================== */
+    const clock = new THREE.Clock();
+    const skySunnyBlue = new THREE.Color(0x8ecae6);
+    const skyEveningCyber = new THREE.Color(0x1e293b);
+    const currentSkyColor = new THREE.Color();
+    const projVec = new THREE.Vector3();
+    const desiredCamPos = new THREE.Vector3();
+    const desiredLookAt = new THREE.Vector3();
+    const currentLookAt = new THREE.Vector3(0, 1.8, 8);
+
+    function projectToScreen(vec3, outEl) {
+      projVec.copy(vec3);
+      projVec.project(camera);
+      if (projVec.z > 1) {
+        outEl.style.opacity = '0';
+        return;
+      }
+      const x = (projVec.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-(projVec.y * 0.5) + 0.5) * window.innerHeight;
+      outEl.style.left = `${x.toFixed(1)}px`;
+      outEl.style.top = `${y.toFixed(1)}px`;
+      outEl.style.opacity = '1';
+    }
+
+    function checkWalkable(nx, nz) {
+      if (nx < -16.5 || nx > 16.5 || nz < -17.5 || nz > 23.0) return false;
+      for (let i = 0; i < colliders.length; i++) {
+        const c = colliders[i];
+        const dx = nx - c.x;
+        const dz = nz - c.z;
+        if (dx * dx + dz * dz < c.r * c.r) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.getElapsedTime();
+
+      let nightFactor = (Math.sin(elapsed * 0.03 - 0.9) + 1) * 0.35;
+      if (skyLightingMode === 1) nightFactor = 0.0;
+      else if (skyLightingMode === 2) nightFactor = 0.35;
+      else if (skyLightingMode === 3) nightFactor = 0.82;
+
+      currentSkyColor.copy(skySunnyBlue).lerp(skyEveningCyber, nightFactor);
+      scene.background.copy(currentSkyColor);
+      scene.fog.color.copy(currentSkyColor);
+      sunLight.intensity = 1.9 * (1 - nightFactor * 0.48);
+      hemiLight.intensity = 1.45 - nightFactor * 0.3;
+      campusWalkwayLight.intensity = 1.5 + nightFactor * 1.1;
+
+      if (aiCoreSphere3D) {
+        aiCoreSphere3D.rotation.y = elapsed * 0.8;
+        aiCoreSphere3D.rotation.x = Math.sin(elapsed * 0.5) * 0.25;
+      }
+      if (wafShieldDomeMesh) {
+        wafShieldDomeMesh.rotation.y = elapsed * 0.35;
+      }
+
+      const skyLabel = document.getElementById('sky-phase-label');
+      if (skyLabel) {
+        skyLabel.textContent = nightFactor > 0.55 ? '(Đêm sáng tạo R&D)' : '(Ban ngày năng động)';
+      }
+
+      player.blinkTimer += dt;
+      if (player.expression === 'calm') {
+        if (player.blinkTimer > 3.5) {
+          player.leftEyeOpen.scale.y = 0.15;
+          player.rightEyeOpen.scale.y = 0.15;
+          if (player.blinkTimer > 3.66) {
+            player.leftEyeOpen.scale.y = 1.25;
+            player.rightEyeOpen.scale.y = 1.25;
+            player.blinkTimer = 0;
+          }
+        }
+      }
+
+      let moveX = joystickState.dx;
+      let moveZ = joystickState.dy;
+      if (keysPressed.w || keysPressed.up) moveZ -= 1;
+      if (keysPressed.s || keysPressed.down) moveZ += 1;
+      if (keysPressed.a || keysPressed.left) moveX -= 1;
+      if (keysPressed.d || keysPressed.right) moveX += 1;
+
+      const moveLen = Math.hypot(moveX, moveZ);
+      if (moveLen > 0.05 && !activeCameraFocus) {
+        moveX /= moveLen;
+        moveZ /= moveLen;
+
+        if (player.meditateTimer > 0) {
+          player.meditateTimer = 0;
+          player.workMat.visible = false;
+          player.handTabletProp.visible = false;
+          setPlayerFacialExpression('calm');
+        }
+
+        const cosY = Math.cos(cameraYaw);
+        const sinY = Math.sin(cameraYaw);
+        const worldDX = moveX * cosY + moveZ * sinY;
+        const worldDZ = -moveX * sinY + moveZ * cosY;
+
+        const stepDist = player.speed * dt;
+        const nextX = player.x + worldDX * stepDist;
+        const nextZ = player.z + worldDZ * stepDist;
+
+        if (checkWalkable(nextX, nextZ)) {
+          player.x = nextX;
+          player.z = nextZ;
+        } else if (checkWalkable(nextX, player.z)) {
+          player.x = nextX;
+        } else if (checkWalkable(player.x, nextZ)) {
+          player.z = nextZ;
+        }
+
+        player.rotY = Math.atan2(worldDX, worldDZ);
+        player.group.position.set(player.x, 0, player.z);
+        player.group.rotation.y = player.rotY;
+
+        const stride = Math.sin(elapsed * 11.5);
+        player.bodyPivot.position.y = Math.abs(stride) * 0.075;
+        player.bodyPivot.rotation.x = 0.05;
+        player.headGroup.rotation.z = stride * 0.05;
+        player.leftLegPivot.rotation.x = stride * 0.55;
+        player.rightLegPivot.rotation.x = -stride * 0.55;
+        player.leftArmPivot.rotation.x = -stride * 0.48;
+        player.rightArmPivot.rotation.x = stride * 0.48;
+        player.leftArmPivot.rotation.z = 0;
+        player.rightArmPivot.rotation.z = 0;
+
+        completeTutorialStep(1);
+      } else {
+        const breath = Math.sin(elapsed * 2.6) * 0.025;
+        player.leftLegPivot.rotation.x = 0;
+        player.rightLegPivot.rotation.x = 0;
+        player.headGroup.rotation.z = Math.sin(elapsed * 1.4) * 0.03;
+
+        if (player.meditateTimer > 0) {
+          player.meditateTimer -= dt;
+          player.workMat.visible = true;
+          player.bodyPivot.position.y = -0.32 + breath * 0.5;
+          player.leftLegPivot.rotation.x = -1.35;
+          player.rightLegPivot.rotation.x = -1.35;
+          player.leftLegPivot.rotation.z = 0.45;
+          player.rightLegPivot.rotation.z = -0.45;
+
+          if (playerTapKeyboardAnim > 0) {
+            playerTapKeyboardAnim = Math.max(0, playerTapKeyboardAnim - dt * 5.5);
+            player.rightArmPivot.rotation.x = -0.95 + Math.sin(playerTapKeyboardAnim * Math.PI) * 0.5;
+            player.leftArmPivot.rotation.x = -0.95 - Math.sin(playerTapKeyboardAnim * Math.PI) * 0.35;
+            player.headGroup.rotation.x = Math.sin(playerTapKeyboardAnim * Math.PI) * 0.12;
+          } else {
+            player.leftArmPivot.rotation.x = -0.85;
+            player.rightArmPivot.rotation.x = -0.85;
+            player.leftArmPivot.rotation.z = -0.25;
+            player.rightArmPivot.rotation.z = 0.25;
+            player.headGroup.rotation.x = 0.12 + breath;
+          }
+          if (player.meditateTimer <= 0 && !chantRunning) {
+            player.workMat.visible = false;
+            player.handTabletProp.visible = false;
+            setPlayerFacialExpression('calm');
+          }
+        } else if (player.bowTimer > 0) {
+          player.bowTimer -= dt;
+          player.workMat.visible = false;
+          player.bodyPivot.position.y = 0;
+          const bowWave = Math.abs(Math.sin(elapsed * 4.2));
+          player.bodyPivot.rotation.x = bowWave * 0.28;
+          player.headGroup.rotation.x = bowWave * 0.2;
+          player.leftArmPivot.rotation.x = -1.15 - bowWave * 0.3;
+          player.rightArmPivot.rotation.x = -1.15 - bowWave * 0.3;
+          player.leftArmPivot.rotation.z = -0.28;
+          player.rightArmPivot.rotation.z = 0.28;
+          if (player.bowTimer <= 0) {
+            player.bodyPivot.rotation.x = 0;
+            player.headGroup.rotation.x = 0;
+            setPlayerFacialExpression('calm');
+          }
+        } else if (player.waveTimer > 0) {
+          player.waveTimer -= dt;
+          player.workMat.visible = false;
+          player.bodyPivot.position.y = Math.abs(Math.sin(elapsed * 6)) * 0.04;
+          player.rightArmPivot.rotation.x = -2.4;
+          player.rightArmPivot.rotation.z = 0.35 + Math.sin(elapsed * 14) * 0.32;
+          player.leftArmPivot.rotation.x = -0.2;
+          player.leftArmPivot.rotation.z = 0;
+          player.headGroup.rotation.z = 0.12;
+          if (player.waveTimer <= 0) {
+            player.rightArmPivot.rotation.z = 0;
+            setPlayerFacialExpression('calm');
+          }
+        } else if (player.joyTimer > 0) {
+          player.joyTimer -= dt;
+          player.workMat.visible = false;
+          player.bodyPivot.position.y = Math.abs(Math.sin(elapsed * 9)) * 0.12;
+          player.leftArmPivot.rotation.x = -2.3;
+          player.rightArmPivot.rotation.x = -2.3;
+          player.leftArmPivot.rotation.z = -0.35;
+          player.rightArmPivot.rotation.z = 0.35;
+          if (player.joyTimer <= 0) {
+            setPlayerFacialExpression('calm');
+          }
+        } else if (isHoldingShake) {
+          player.bodyPivot.position.y = 0;
+          const shakeOsc = Math.sin(elapsed * 26) * 0.35;
+          player.leftArmPivot.rotation.x = -1.2 + shakeOsc;
+          player.rightArmPivot.rotation.x = -1.2 - shakeOsc;
+          player.leftArmPivot.rotation.z = -0.22;
+          player.rightArmPivot.rotation.z = 0.22;
+        } else {
+          player.workMat.visible = false;
+          player.bodyPivot.position.y = breath;
+          player.bodyPivot.rotation.x = 0;
+          player.headGroup.rotation.x = 0;
+          player.leftArmPivot.rotation.x = 0;
+          player.rightArmPivot.rotation.x = 0;
+          player.leftArmPivot.rotation.z = 0;
+          player.rightArmPivot.rotation.z = 0;
+          player.leftLegPivot.rotation.z = 0;
+          player.rightLegPivot.rotation.z = 0;
+        }
+      }
+
+      let foundZone = null;
+      let minDist = Infinity;
+      for (let i = 0; i < ACTIVITY_ZONES.length; i++) {
+        const z = ACTIVITY_ZONES[i];
+        const d1 = Math.hypot(player.x - z.x, player.z - z.z);
+        const d2 = z.altX !== undefined ? Math.hypot(player.x - z.altX, player.z - z.altZ) : Infinity;
+        const dMin = Math.min(d1, d2);
+        if (dMin < z.radius && dMin < minDist) {
+          minDist = dMin;
+          foundZone = z;
+        }
+        const pulse = 1 + Math.sin(elapsed * 3.5 + i) * 0.08;
+        zoneRingMeshes[i].scale.set(pulse, pulse, 1);
+      }
+
+      currentNearestZone = foundZone;
+      if (foundZone && !activeCameraFocus) {
+        btnProximityAction.style.display = 'inline-flex';
+        btnProximityAction.textContent = foundZone.name;
+        completeTutorialStep(2);
+      } else {
+        btnProximityAction.style.display = 'none';
+      }
+
+      if (activeCameraFocus) {
+        desiredCamPos.copy(activeCameraFocus.pos);
+        desiredLookAt.copy(activeCameraFocus.look);
+      } else {
+        const camDist = 7.4;
+        const camHeight = 3.2 + cameraPitch * 4.2;
+        desiredCamPos.set(
+          player.x + Math.sin(cameraYaw) * camDist,
+          camHeight,
+          player.z + Math.cos(cameraYaw) * camDist
+        );
+        desiredLookAt.set(player.x, 1.55, player.z - 1.2);
+      }
+      camera.position.lerp(desiredCamPos, 0.085);
+      currentLookAt.lerp(desiredLookAt, 0.1);
+      camera.lookAt(currentLookAt);
+
+      for (let i = 0; i < activeServerBlades.length; i++) {
+        const node = activeServerBlades[i];
+        node.beacon.rotation.y = elapsed * 2.5 + i;
+      }
+
+      if (bellActive) {
+        bellPhase += dt * 0.62;
+        if (bellPhase > 1) bellPhase = 0;
+        const pxSize = 180 - bellPhase * 126;
+        const ringEl = document.getElementById('bell-shrinking-ring');
+        ringEl.style.width = `${pxSize.toFixed(1)}px`;
+        ringEl.style.height = `${pxSize.toFixed(1)}px`;
+      }
+
+      if (bellSwingTimer > 0 && cicdCoreMesh3D && cicdPulseBeam3D) {
+        bellSwingTimer = Math.max(0, bellSwingTimer - dt);
+        cicdCoreMesh3D.rotation.y = elapsed * 4 * bellSwingTimer;
+        cicdPulseBeam3D.position.x = 1.15 + Math.sin(elapsed * 14) * 0.25 * bellSwingTimer;
+      }
+      if (cicdShockwaveRing && cicdShockwaveRing.material.opacity > 0.01) {
+        cicdShockwaveRing.scale.addScalar(dt * 6.5);
+        cicdShockwaveRing.material.opacity = Math.max(0, cicdShockwaveRing.material.opacity - dt * 0.85);
+      }
+
+      if (chantRunning) {
+        chantRingPhase += dt * 0.82;
+        if (chantRingPhase > 1) chantRingPhase = 0;
+        const pxSize = 180 - chantRingPhase * 126;
+        const chantRingEl = document.getElementById('chant-shrinking-ring');
+        chantRingEl.style.width = `${pxSize.toFixed(1)}px`;
+        chantRingEl.style.height = `${pxSize.toFixed(1)}px`;
+      }
+      if (mechanicalKeyboard3D) {
+        mechanicalKeyboard3D.scale.lerp(dummyScale.set(1.0, 1.0, 1.0), 0.18);
+      }
+
+      if (isHoldingShake && !fortuneRevealed) {
+        shakeProgress = Math.min(100, shakeProgress + dt * 65);
+        fortuneShakeBar.style.width = `${shakeProgress.toFixed(0)}%`;
+        if (mentorCardBox3D) {
+          mentorCardBox3D.rotation.z = Math.sin(elapsed * 28) * 0.22;
+        }
+        if (Math.random() < 0.22) audio.playCardShuffle();
+        if (shakeProgress >= 100) {
+          revealRandomFortune();
+        }
+      }
+
+      const sArr = smokeGeo.attributes.position.array;
+      for (let i = 0; i < SMOKE_COUNT; i++) {
+        sArr[i * 3 + 1] += dt * 1.05;
+        sArr[i * 3] += Math.sin(elapsed * 1.5 + i) * 0.004;
+        if (sArr[i * 3 + 1] > 6.8) {
+          sArr[i * 3 + 1] = 2.1;
+          sArr[i * 3] = (Math.random() - 0.5) * 0.9;
+        }
+      }
+      smokeGeo.attributes.position.needsUpdate = true;
+
+      const fArr = fireflyGeo.attributes.position.array;
+      for (let i = 0; i < FIREFLY_COUNT; i++) {
+        fArr[i * 3] += Math.sin(elapsed * 0.9 + i) * 0.012;
+        fArr[i * 3 + 1] += Math.cos(elapsed * 1.3 + i) * 0.008;
+      }
+      fireflyGeo.attributes.position.needsUpdate = true;
+
+      const pArr = petalGeo.attributes.position.array;
+      for (let i = 0; i < PETAL_COUNT; i++) {
+        pArr[i * 3 + 1] -= dt * 0.55;
+        pArr[i * 3] += Math.sin(elapsed + i) * 0.008;
+        if (pArr[i * 3 + 1] < 0.1) {
+          pArr[i * 3 + 1] = 8.5;
+        }
+      }
+      petalGeo.attributes.position.needsUpdate = true;
+
+      for (let i = 0; i < techTreeCardsGroup.children.length; i++) {
+        const card = techTreeCardsGroup.children[i];
+        card.rotation.z = Math.sin(elapsed * 2.1 + card.userData.phase) * 0.18;
+      }
+      for (let i = 0; i < floatingDataPodsGroup.children.length; i++) {
+        const pod = floatingDataPodsGroup.children[i];
+        pod.userData.angle += dt * pod.userData.speed;
+        pod.position.x = Math.cos(pod.userData.angle) * pod.userData.radius;
+        pod.position.z = Math.sin(pod.userData.angle) * pod.userData.radius;
+      }
+
+      for (let i = 0; i < AI_COUNT; i++) {
+        const ag = aiAgents[i];
+        let bobY = 0;
+        let tiltX = 0;
+        let armLeftPitch = 0;
+        let armRightPitch = 0;
+        let legSwing = 0;
+
+        if (ag.greetTimer > 0) {
+          ag.greetTimer -= dt;
+          tiltX = Math.abs(Math.sin(elapsed * 4)) * 0.2;
+          armLeftPitch = -0.4;
+          armRightPitch = -2.3 + Math.sin(elapsed * 12) * 0.35;
+        } else if (ag.behavior === 'walk') {
+          const dx = ag.targetX - ag.x;
+          const dz = ag.targetZ - ag.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist < 0.6) {
+            ag.targetX = (Math.random() - 0.5) * 15;
+            ag.targetZ = -5 + Math.random() * 21;
+          } else {
+            const step = 1.65 * dt;
+            const nx = ag.x + (dx / dist) * step;
+            const nz = ag.z + (dz / dist) * step;
+            if (checkWalkable(nx, nz)) {
+              ag.x = nx;
+              ag.z = nz;
+            } else {
+              ag.targetX = (Math.random() - 0.5) * 14;
+              ag.targetZ = -4 + Math.random() * 18;
+            }
+            ag.rotY = Math.atan2(dx, dz);
+          }
+          const wCycle = Math.sin(elapsed * 6.5 + ag.phase);
+          bobY = Math.abs(wCycle) * 0.07;
+          legSwing = wCycle * 0.45;
+          armLeftPitch = -legSwing * 0.85;
+          armRightPitch = legSwing * 0.85;
+        } else if (ag.behavior === 'pray_hall' || ag.behavior === 'incense') {
+          const workWave = Math.sin(elapsed * 3.0 + ag.phase);
+          tiltX = 0.08;
+          armLeftPitch = -1.1;
+          armRightPitch = -1.1 + workWave * 0.22;
+        } else if (ag.behavior === 'chant_sit') {
+          bobY = -0.28;
+          tiltX = 0.08;
+          armLeftPitch = -0.95 + Math.sin(elapsed * 8 + ag.phase) * 0.15;
+          armRightPitch = -0.95 - Math.sin(elapsed * 8 + ag.phase) * 0.15;
+        } else if (ag.behavior === 'photo') {
+          armLeftPitch = -1.45;
+          armRightPitch = -1.45;
+          tiltX = -0.05;
+        }
+
+        const s = ag.scale;
+        const cosR = Math.cos(ag.rotY);
+        const sinR = Math.sin(ag.rotY);
+
+        dummyPos.set(ag.x, (0.58 + bobY) * s, ag.z);
+        dummyEuler.set(tiltX, ag.rotY, 0);
+        dummyQuat.setFromEuler(dummyEuler);
+        dummyScale.set(s, s, s);
+        dummyMatrix.compose(dummyPos, dummyQuat, dummyScale);
+        aiBodyInstanced.setMatrixAt(i, dummyMatrix);
+
+        dummyPos.set(ag.x, (1.18 + bobY) * s, ag.z);
+        dummyEuler.set(tiltX * 1.1, ag.rotY + Math.sin(elapsed + ag.phase) * 0.12, 0);
+        dummyQuat.setFromEuler(dummyEuler);
+        dummyMatrix.compose(dummyPos, dummyQuat, dummyScale);
+        aiHeadInstanced.setMatrixAt(i, dummyMatrix);
+
+        dummyPos.set(ag.x, (1.42 + bobY) * s, ag.z);
+        dummyScale.set(
+          ag.hasCap ? s * 0.95 : s * 0.55,
+          s * 0.7,
+          ag.hasCap ? s * 0.95 : s * 0.55
+        );
+        dummyMatrix.compose(dummyPos, dummyQuat, dummyScale);
+        aiHatInstanced.setMatrixAt(i, dummyMatrix);
+
+        const armOffsetX = 0.28 * s;
+        dummyScale.set(s, s, s);
+
+        dummyPos.set(ag.x - cosR * armOffsetX, (0.72 + bobY) * s, ag.z + sinR * armOffsetX);
+        dummyEuler.set(armLeftPitch + tiltX, ag.rotY, 0);
+        dummyQuat.setFromEuler(dummyEuler);
+        dummyMatrix.compose(dummyPos, dummyQuat, dummyScale);
+        aiLeftArmInstanced.setMatrixAt(i, dummyMatrix);
+
+        dummyPos.set(ag.x + cosR * armOffsetX, (0.72 + bobY) * s, ag.z - sinR * armOffsetX);
+        dummyEuler.set(armRightPitch + tiltX, ag.rotY, 0);
+        dummyQuat.setFromEuler(dummyEuler);
+        dummyMatrix.compose(dummyPos, dummyQuat, dummyScale);
+        aiRightArmInstanced.setMatrixAt(i, dummyMatrix);
+
+        const legOffsetX = 0.12 * s;
+        const legHeight = ag.behavior === 'chant_sit' ? 0.12 * s : 0.22 * s;
+
+        dummyPos.set(ag.x - cosR * legOffsetX, legHeight, ag.z + sinR * legOffsetX);
+        dummyEuler.set(legSwing, ag.rotY, 0);
+        dummyQuat.setFromEuler(dummyEuler);
+        dummyMatrix.compose(dummyPos, dummyQuat, dummyScale);
+        aiLeftLegInstanced.setMatrixAt(i, dummyMatrix);
+
+        dummyPos.set(ag.x + cosR * legOffsetX, legHeight, ag.z - sinR * legOffsetX);
+        dummyEuler.set(-legSwing, ag.rotY, 0);
+        dummyQuat.setFromEuler(dummyEuler);
+        dummyMatrix.compose(dummyPos, dummyQuat, dummyScale);
+        aiRightLegInstanced.setMatrixAt(i, dummyMatrix);
+      }
+      aiBodyInstanced.instanceMatrix.needsUpdate = true;
+      aiHeadInstanced.instanceMatrix.needsUpdate = true;
+      aiHatInstanced.instanceMatrix.needsUpdate = true;
+      aiLeftArmInstanced.instanceMatrix.needsUpdate = true;
+      aiRightArmInstanced.instanceMatrix.needsUpdate = true;
+      aiLeftLegInstanced.instanceMatrix.needsUpdate = true;
+      aiRightLegInstanced.instanceMatrix.needsUpdate = true;
+
+      for (let i = 0; i < aiBubbleSlots.length; i++) {
+        const slot = aiBubbleSlots[i];
+        slot.timer += dt;
+        if (slot.timer > 5.2) {
+          slot.timer = 0;
+          slot.agentIndex = Math.floor(Math.random() * AI_COUNT);
+          slot.el.textContent = AI_WISH_QUOTES[Math.floor(Math.random() * AI_WISH_QUOTES.length)];
+        }
+        const ag = aiAgents[slot.agentIndex];
+        projVec.set(ag.x, 1.92 * ag.scale, ag.z);
+        projectToScreen(projVec, slot.el);
+      }
+
+      for (let i = 0; i < zoneLabelElements.length; i++) {
+        projectToScreen(zoneLabelElements[i].pos, zoneLabelElements[i].el);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    updateHudStats();
+    animate();
+  </script>
+</body>
+</html>
