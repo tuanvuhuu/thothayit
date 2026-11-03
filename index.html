@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Đại chiến miếu ông Trường con</title>
+  <title>Tu Tiên IT — Ngự Pháp Bảo Độ Kiếp 2D (Tiên Hiệp Chân Truyền)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,6 @@
       --realm-glow: rgba(16, 185, 129, 0.45);
       --realm-bg: rgba(6, 28, 36, 0.88);
       --realm-text: #f1f5f9;
-      --zone-border: #2dd4bf;
     }
 
     * {
@@ -51,36 +50,49 @@
       cursor: crosshair;
     }
 
-    /* Hiệu ứng chớp đỏ viền màn hình khi trúng đạn */
     #damage-vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 14;
+      opacity: 0;
+      background: radial-gradient(circle, rgba(0,0,0,0) 45%, rgba(225, 29, 72, 0.72) 100%);
+      transition: opacity 0.14s ease-out;
+    }
+
+    #zone-transition-flash {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 15;
       opacity: 0;
-      background: radial-gradient(circle, rgba(0,0,0,0) 48%, rgba(225, 29, 72, 0.68) 100%);
-      transition: opacity 0.14s ease-out;
-    }
-
-    /* Hiệu ứng lóe sáng khi dịch chuyển sang Vùng Đất Mới */
-    #zone-transition-flash {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 16;
-      opacity: 0;
-      background: radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(45,212,191,0.4) 60%, rgba(0,0,0,0) 100%);
+      background: radial-gradient(circle, rgba(255,255,255,0.88) 0%, rgba(45,212,191,0.45) 60%, rgba(0,0,0,0) 100%);
       transition: opacity 0.45s ease-out;
     }
 
-    /* Giao diện HUD tự động biến đổi theo Cảnh Giới & Vùng Đất */
+    /* Dải lụa Thư Pháp Tiên Hiệp khi xuất chiêu */
+    #xianxia-cutin {
+      position: fixed;
+      top: 18%;
+      left: 50%;
+      transform: translate(-50%, -15px) scale(0.92);
+      z-index: 18;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #xianxia-cutin.show {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+    }
+
     .realm-hud-card {
       background: var(--realm-bg);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1.5px solid var(--realm-primary);
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.68), 0 0 14px var(--realm-glow), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-      transition: border-color 0.45s ease, box-shadow 0.45s ease, background 0.45s ease;
+      transition: border-color 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
     }
 
     .realm-btn {
@@ -125,7 +137,6 @@
       transition: all 0.12s ease;
     }
 
-    /* Ô kỹ năng hiển thị rõ tiêu hao MP & Cooldown */
     .skill-slot {
       position: relative;
       overflow: hidden;
@@ -136,7 +147,7 @@
     }
     .skill-slot:active { transform: scale(0.9); }
     .skill-slot.no-mana {
-      opacity: 0.55;
+      opacity: 0.5;
       border-color: #ef4444;
     }
 
@@ -166,9 +177,7 @@
         transform: scale(1.05);
       }
     }
-    .tribulation-ready {
-      animation: tribulationPulse 1.15s infinite ease-in-out;
-    }
+    .tribulation-ready { animation: tribulationPulse 1.15s infinite ease-in-out; }
 
     @keyframes ctoRainbowBorder {
       0% { border-color: #fde047; box-shadow: 0 0 18px rgba(253, 224, 71, 0.65); }
@@ -188,35 +197,42 @@
       60% { transform: translate(-5px, -3px); }
       80% { transform: translate(5px, 4px); }
     }
-    .screen-shake { animation: thunderShake 0.24s ease-in-out; }
+    .screen-shake { animation: thunderShake 0.26s ease-in-out; }
 
-    /* Custom Scrollbar gọn cho Bottom Sheet */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
     ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.45); border-radius: 999px; }
   </style>
 </head>
 <body data-realm-tier="0">
-  <!-- =================================================================== -->
-  <!-- SÂN CHƠI 2D CANVAS 60FPS & HIỆU ỨNG TRÚNG ĐẠN / CHUYỂN VÙNG ĐẤT     -->
-  <!-- =================================================================== -->
+  <!-- SÂN CHƠI 2D CANVAS & LỚP HIỆU ỨNG -->
   <canvas id="world-canvas"></canvas>
   <div id="damage-vignette"></div>
   <div id="zone-transition-flash"></div>
 
-  <!-- =================================================================== -->
-  <!-- MÀN HÌNH NHẬP MÔN (CHỌN HỆ PHÁI, SKIN KHỞI ĐẦU & ĐẠO HIỆU)          -->
-  <!-- =================================================================== -->
-  <div id="welcome-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/88 backdrop-blur-md">
+  <!-- DẢI LỤA THƯ PHÁP TIÊN HIỆP KHI THI TRIỂN ĐẠI CHIÊU -->
+  <div id="xianxia-cutin">
+    <div class="px-6 py-2 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-950/95 via-red-950/95 to-amber-950/95 shadow-2xl text-center">
+      <div id="cutin-skill-name" class="serif-title text-lg sm:text-2xl font-black tracking-wider bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-100 bg-clip-text text-transparent">
+        【 VẠN KIẾM QUY TÔNG 】
+      </div>
+      <div id="cutin-skill-poem" class="text-[10px] sm:text-xs text-amber-200/90 font-semibold italic mt-0.5">
+        "Thiên cương vạn kiếm tề phi, trảm tận thế gian vạn cổ bug!"
+      </div>
+    </div>
+  </div>
+
+  <!-- MÀN HÌNH NHẬP MÔN -->
+  <div id="welcome-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-950/85 backdrop-blur-md">
     <div class="realm-hud-card rounded-3xl max-w-lg w-full p-4 sm:p-5 text-center max-h-[92dvh] overflow-y-auto">
       <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-300 text-[10px] font-bold mb-1">
-        <span>🗺️ 7 ĐẠI VÙNG ĐẤT BIẾN ĐỔI NỀN • 7 CHƯƠNG CỐT TRUYỆN • HP/MP THỰC TẾ</span>
+        <span>⚔️ TIÊN HIỆP CHÂN TRUYỀN • 7 VÙNG ĐẤT • 7 BẬC ĐỘ KIẾP • HP/MP THỰC TẾ</span>
       </div>
       <h1 class="serif-title text-xl sm:text-3xl font-extrabold bg-gradient-to-r from-amber-200 via-yellow-300 to-teal-200 bg-clip-text text-transparent">
-        Tu Tiên IT 2D — Vạn Giới Độ Kiếp
+        Tu Tiên IT 2D — Vạn Kiếm Độ Kiếp
       </h1>
       <p class="text-[11px] text-slate-300 mt-1">
-        Bay qua Cổng Không Gian hoặc làm nhiệm vụ Cốt Truyện để khám phá 7 Đại Vùng Đất với màu nền, thiên tượng và kiến trúc hoàn toàn khác biệt!
+        Ngự 8 Pháp Bảo Thiết Bị Ngoại Vi, thi triển 7 Đại Chiêu Thức Tiên Hiệp Chân Truyền, khám phá 7 Đại Vùng Đất và rèn luyện tri thức Hạ tầng – Bảo mật – Chính sách IT!
       </p>
 
       <div class="mt-2.5 text-left">
@@ -246,10 +262,8 @@
     </div>
   </div>
 
-  <!-- =================================================================== -->
-  <!-- MÀN HÌNH ĐẾM NGƯỢC HỒI SINH KHI HP VỀ 0 (502 BAD GATEWAY RESPAWN)   -->
-  <!-- =================================================================== -->
-  <div id="respawn-overlay" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-rose-950/75 backdrop-blur-sm">
+  <!-- MÀN HÌNH ĐẾM NGƯỢC 5.0 GIÂY HỒI SINH KHI HP = 0 -->
+  <div id="respawn-overlay" class="hidden fixed inset-0 z-40 flex items-center justify-center p-4 bg-rose-950/80 backdrop-blur-sm">
     <div class="realm-hud-card rounded-3xl max-w-md w-full p-5 text-center border-2 border-rose-500 shadow-2xl">
       <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-rose-500/25 border border-rose-400 text-rose-200 text-[10px] font-extrabold">
         <span>⚠️ 502 BAD GATEWAY — NGUYÊN THẦN TRỌNG THƯƠNG</span>
@@ -258,7 +272,7 @@
         Đang Khởi Động Lại Chân Nguyên...
       </h2>
       <p class="text-xs text-slate-200 mt-1">
-        Bạn đã bị hỏa lực của Tâm Ma đánh cạn Sinh Lực (HP = 0). Hệ thống tự động Reboot hồi sinh sau:
+        Hỏa lực của Tâm Ma đã đánh cạn Sinh Lực (HP = 0). Hệ thống tự động Reboot hồi sinh sau:
       </p>
       <div id="respawn-timer-num" class="mono-font text-4xl font-black text-amber-300 my-3">
         5.0s
@@ -272,9 +286,7 @@
     </div>
   </div>
 
-  <!-- =================================================================== -->
-  <!-- HỘP THOẠI CỐT TRUYỆN CHÍNH TUYẾN (RPG STORY DIALOGUE MODAL)         -->
-  <!-- =================================================================== -->
+  <!-- HỘP THOẠI CỐT TRUYỆN RPG -->
   <div id="story-dialogue-modal" class="hidden fixed inset-x-0 bottom-16 z-30 flex justify-center px-3 pointer-events-none">
     <div class="realm-hud-card rounded-2xl max-w-xl w-full p-3.5 pointer-events-auto border-2 border-amber-400/80 shadow-2xl">
       <div class="flex items-start gap-3">
@@ -304,13 +316,11 @@
     </div>
   </div>
 
-  <!-- =================================================================== -->
-  <!-- GIAO DIỆN HUD TỐI GIẢN MOBILE-FIRST (GIẢI PHÓNG >92% MÀN HÌNH)      -->
-  <!-- =================================================================== -->
+  <!-- GIAO DIỆN HUD TỐI GIẢN MOBILE-FIRST -->
   <div id="hud-root" class="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-1.5 sm:p-2.5">
-    <!-- HÀNG TRÊN CÙNG: Góc Trái (HP/Shield/MP/TuVi) + Giữa (Cốt Truyện & Vùng Đất) + Góc Phải -->
+    <!-- HÀNG TRÊN CÙNG -->
     <div class="flex flex-wrap items-start justify-between gap-1.5">
-      <!-- GÓC TRÊN TRÁI: Thẻ Trạng Thái Nhân Vật (HP + Khiên + MP + Tu Vi + Độ Kiếp) -->
+      <!-- GÓC TRÊN TRÁI: Thẻ Nhân Vật + HP/Khiên + MP + Tu Vi + Độ Kiếp -->
       <div class="realm-hud-card rounded-2xl px-2 py-1.5 flex items-center gap-2 pointer-events-auto">
         <button
           id="btn-open-realm-preview"
@@ -322,7 +332,7 @@
           <span id="hud-tier-num" class="text-[8px] font-extrabold mono-font text-amber-200 mt-0.5">Bậc 1</span>
         </button>
 
-        <div class="min-w-[138px] sm:min-w-[172px]">
+        <div class="min-w-[136px] sm:min-w-[168px]">
           <div class="flex items-center gap-1">
             <span id="hud-dao-name" class="font-extrabold text-[11px] sm:text-xs text-white truncate max-w-[92px]">Độc Cô Clean Code</span>
             <span
@@ -334,7 +344,7 @@
             </span>
           </div>
 
-          <!-- Thanh HP + Khiên Giáp -->
+          <!-- Thanh HP + Khiên -->
           <div class="flex items-center gap-1 mt-0.5">
             <span class="text-[8px] font-black text-rose-400 w-4">HP</span>
             <div class="relative flex-1 h-2 rounded-full bg-slate-950 border border-rose-500/40 overflow-hidden">
@@ -344,13 +354,13 @@
             <span id="hud-hp-text" class="text-[8px] font-bold text-rose-200 mono-font w-12 text-right">1200</span>
           </div>
 
-          <!-- Thanh MP (Linh Lực thực tế dùng cho Skill) -->
+          <!-- Thanh MP -->
           <div class="flex items-center gap-1 mt-0.5">
             <span class="text-[8px] font-black text-sky-400 w-4">MP</span>
             <div class="flex-1 h-1.5 rounded-full bg-slate-950 border border-sky-500/40 overflow-hidden">
               <div id="hud-mp-bar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-300 transition-all duration-100" style="width: 100%"></div>
             </div>
-            <span id="hud-mp-text" class="text-[8px] font-bold text-sky-200 mono-font w-12 text-right">300/300</span>
+            <span id="hud-mp-text" class="text-[8px] font-bold text-sky-200 mono-font w-12 text-right">320/320</span>
           </div>
 
           <!-- Thanh Tu Vi -->
@@ -363,43 +373,39 @@
           </div>
         </div>
 
-        <!-- Nút Độ Kiếp -->
         <button
           id="btn-tribulation-top"
           class="gold-btn px-2 py-1.5 rounded-xl text-[10px] font-extrabold flex flex-col items-center justify-center leading-tight shrink-0"
-          title="Đột phá Cảnh Giới để lột xác Ngoại hình & Giao diện!"
+          title="Đột phá Cảnh Giới (9 Đạo Thiên Lôi)!"
         >
           <span>⚡ Độ Kiếp</span>
           <span id="trib-sub-label" class="text-[8px] text-amber-100 font-semibold">Đủ Tu Vi</span>
         </button>
       </div>
 
-      <!-- GIỮA ĐỈNH MÀN HÌNH: Thẻ Vùng Đất Hiện Tại + Nhiệm Vụ Cốt Truyện + Thanh Máu Boss -->
+      <!-- GIỮA ĐỈNH MÀN HÌNH: Đổi Vùng Đất + Cốt Truyện + Thanh Máu Boss -->
       <div class="flex flex-col items-center gap-1 pointer-events-auto mx-auto order-3 sm:order-2 w-full sm:w-auto">
         <div class="flex items-center gap-1.5">
-          <!-- Nút Mở Bản Đồ 7 Đại Vùng Đất -->
           <button
             id="btn-open-zones"
             class="realm-hud-card px-2.5 py-1 rounded-xl text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1.5 hover:brightness-115 active:scale-95"
-            title="Bấm để mở Bản Đồ 7 Đại Vùng Đất & Dịch chuyển tức thời"
+            title="Mở Bản Đồ 7 Đại Vùng Đất"
           >
             <span id="hud-zone-icon">🏯</span>
             <span id="hud-zone-name" class="text-teal-200">Vùng 1: Sơn Môn Server</span>
             <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40">🗺️ Đổi Vùng</span>
           </button>
 
-          <!-- Nút Cốt Truyện Chính Tuyến -->
           <button
             id="btn-story-tracker"
             class="realm-hud-card px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1 text-amber-200 hover:brightness-115 active:scale-95"
-            title="Xem chi tiết Chương Cốt Truyện & Nhiệm vụ"
+            title="Xem 7 Chương Cốt Truyện"
           >
             <span>📖</span>
-            <span id="hud-story-title" class="truncate max-w-[135px] sm:max-w-[180px]">Ch.1: Diệt 6 Bug 404 (0/6)</span>
+            <span id="hud-story-title" class="truncate max-w-[135px] sm:max-w-[180px]">Ch.1: Diệt 5 Bug 404 (0/5)</span>
           </button>
         </div>
 
-        <!-- Thanh Máu Boss / Đối Thủ PvP -->
         <div id="boss-hp-panel" class="hidden realm-hud-card rounded-2xl px-3 py-1 border border-rose-500/80 w-64 sm:w-80">
           <div class="flex items-center justify-between text-[10px] font-extrabold">
             <span id="boss-name-label" class="text-rose-300 truncate max-w-[185px]">👹 Hắc Ám Ma Vương</span>
@@ -411,7 +417,7 @@
         </div>
       </div>
 
-      <!-- GÓC TRÊN PHẢI: Chế độ chiến đấu + Skin + Càn Khôn Túi -->
+      <!-- GÓC TRÊN PHẢI: Chế độ chiến đấu + Skin + Túi Đồ -->
       <div class="flex items-center gap-1 pointer-events-auto order-2 sm:order-3">
         <div class="realm-hud-card rounded-xl p-0.5 flex items-center gap-0.5">
           <button data-mode="wave" class="combat-mode-btn realm-btn active-tab px-2 py-1 rounded-lg text-[10px] font-bold" title="Vượt Ải Theo Vùng Đất">
@@ -428,27 +434,15 @@
           </button>
         </div>
 
-        <button
-          id="btn-open-skins"
-          class="realm-btn px-2 py-1.5 rounded-xl text-[10px] font-extrabold text-amber-200"
-          title="Mở Tủ Ngoại Trang 12 Bộ Skin Truyền Thuyết"
-        >
+        <button id="btn-open-skins" class="realm-btn px-2 py-1.5 rounded-xl text-[10px] font-extrabold text-amber-200" title="12 Bộ Skin Truyền Thuyết">
           👘 <span class="hidden sm:inline">12 Skin</span>
         </button>
 
-        <button
-          id="btn-auto-battle"
-          class="jade-btn px-2 py-1.5 rounded-xl text-[10px] font-extrabold"
-          title="Bật/Tắt AI Tự Đánh"
-        >
+        <button id="btn-auto-battle" class="jade-btn px-2 py-1.5 rounded-xl text-[10px] font-extrabold" title="Bật/Tắt AI Tự Đánh">
           🤖 <span id="auto-battle-label" class="hidden sm:inline">Tự Đánh</span>
         </button>
 
-        <button
-          id="btn-open-hub"
-          class="gold-btn px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold flex items-center gap-1"
-          title="Mở Túi Đồ, Rèn Giáp (+15), 8 Pháp Bảo, Cốt Truyện & 60 Bí Kíp"
-        >
+        <button id="btn-open-hub" class="gold-btn px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold flex items-center gap-1" title="Mở Càn Khôn Túi">
           <span>🎒</span>
           <span class="hidden sm:inline">Túi Đồ</span>
         </button>
@@ -459,7 +453,7 @@
       </div>
     </div>
 
-    <!-- BANNER THÔNG BÁO CHUYỂN VÙNG ĐẤT / ĐỘ KIẾP GIỮA MÀN HÌNH -->
+    <!-- BANNER THÔNG BÁO GIỮA MÀN HÌNH -->
     <div class="flex justify-center pointer-events-none my-auto">
       <div id="center-banner" class="hidden realm-hud-card px-4 py-2.5 rounded-2xl border-2 text-center shadow-2xl max-w-md" style="border-color: var(--realm-secondary);">
         <div id="center-banner-title" class="serif-title text-sm sm:text-lg font-extrabold text-amber-300">
@@ -471,9 +465,8 @@
       </div>
     </div>
 
-    <!-- HÀNG ĐÁY: Góc Trái (Bong bóng Đạo Hữu Online & DPS) + Giữa (Thanh 6 Kỹ Năng + Q/E Đan + Lướt) -->
+    <!-- HÀNG ĐÁY: Đạo Hữu Online + Thanh Chiêu Thức Tiên Hiệp Chân Truyền ([1]-[6] + [R] Tiên Đế Chưởng + [Q/E] Đan + [Space] Lướt) -->
     <div class="flex items-end justify-between gap-1.5 pb-0.5">
-      <!-- Nút Bong Bóng Đạo Hữu Online & Top DPS -->
       <div class="pointer-events-auto relative">
         <div id="mini-social-drawer" class="hidden realm-hud-card rounded-2xl p-2.5 mb-1.5 w-64 sm:w-72 text-[11px] space-y-2">
           <div class="flex items-center justify-between border-b border-slate-700 pb-1">
@@ -488,98 +481,96 @@
           </div>
         </div>
 
-        <button
-          id="btn-toggle-social"
-          class="realm-hud-card px-2 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:brightness-110"
-        >
+        <button id="btn-toggle-social" class="realm-hud-card px-2 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:brightness-110">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
           <span class="hidden sm:inline">Đạo Hữu</span>
           <span class="text-amber-300 mono-font">⚔️<span id="hud-kills-count">0</span></span>
         </button>
       </div>
 
-      <!-- THANH KỸ NĂNG CHIẾN ĐẤU (6 Skill tốn MP + [Q] Huyết Đan + [E] Linh Đan + [Space] Lướt) -->
+      <!-- THANH TUYỆT KỸ TIÊN HIỆP ([1]–[6], Đại Chiêu [R], Đan Dược [Q]/[E], Ngự Phong [Space]) -->
       <div class="realm-hud-card rounded-2xl p-1 flex items-center gap-1 pointer-events-auto mx-auto overflow-x-auto max-w-full">
-        <button data-skill="0" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 1] Vạn Kiếm Quy Tông (25 MP)">
+        <button data-skill="0" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 1] Vạn Kiếm Quy Tông & Kiếm Mộ (25 MP)">
           <span class="text-sm leading-none">🗡️</span>
-          <span class="text-[8px] font-bold text-amber-200 mt-0.5">1.Kiếm</span>
+          <span class="text-[8px] font-bold text-amber-200 mt-0.5">1.VạnKiếm</span>
           <span class="text-[7px] text-sky-300 mono-font">25MP</span>
           <div id="cd-overlay-0" class="skill-cd-overlay" style="height: 0%"></div>
         </button>
 
-        <button data-skill="1" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 2] Cửu Thiên Thần Lôi (35 MP)">
+        <button data-skill="1" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 2] Cửu Thiên Thần Lôi — Ngũ Lôi Chính Pháp (30 MP)">
           <span class="text-sm leading-none">⚡</span>
-          <span class="text-[8px] font-bold text-cyan-200 mt-0.5">2.Lôi</span>
-          <span class="text-[7px] text-sky-300 mono-font">35MP</span>
+          <span class="text-[8px] font-bold text-cyan-200 mt-0.5">2.NgũLôi</span>
+          <span class="text-[7px] text-sky-300 mono-font">30MP</span>
           <div id="cd-overlay-1" class="skill-cd-overlay" style="height: 0%"></div>
         </button>
 
-        <button data-skill="2" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 3] Bát Quái Zero-Trust (45 MP)">
+        <button data-skill="2" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 3] Thái Cực Bát Quái & Kim Liên Hộ Thể (35 MP)">
           <span class="text-sm leading-none">☯️</span>
-          <span class="text-[8px] font-bold text-emerald-200 mt-0.5">3.Trận</span>
-          <span class="text-[7px] text-sky-300 mono-font">45MP</span>
+          <span class="text-[8px] font-bold text-emerald-200 mt-0.5">3.TháiCực</span>
+          <span class="text-[7px] text-sky-300 mono-font">35MP</span>
           <div id="cd-overlay-2" class="skill-cd-overlay" style="height: 0%"></div>
         </button>
 
-        <button data-skill="3" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 4] Song Long Overclock (50 MP)">
+        <button data-skill="3" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 4] Băng Hỏa Lưỡng Nghi Chân Long (45 MP)">
           <span class="text-sm leading-none">🐉</span>
-          <span class="text-[8px] font-bold text-orange-200 mt-0.5">4.Long</span>
-          <span class="text-[7px] text-sky-300 mono-font">50MP</span>
+          <span class="text-[8px] font-bold text-orange-200 mt-0.5">4.ChânLong</span>
+          <span class="text-[7px] text-sky-300 mono-font">45MP</span>
           <div id="cd-overlay-3" class="skill-cd-overlay" style="height: 0%"></div>
         </button>
 
-        <button data-skill="4" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 5] Phân Thân Đa Luồng (60 MP)">
+        <button data-skill="4" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 5] Nhất Khí Hóa Tam Thanh & Tia Tiên Quang (50 MP)">
           <span class="text-sm leading-none">👥</span>
-          <span class="text-[8px] font-bold text-purple-200 mt-0.5">5.Ảnh</span>
-          <span class="text-[7px] text-sky-300 mono-font">60MP</span>
+          <span class="text-[8px] font-bold text-purple-200 mt-0.5">5.TamThanh</span>
+          <span class="text-[7px] text-sky-300 mono-font">50MP</span>
           <div id="cd-overlay-4" class="skill-cd-overlay" style="height: 0%"></div>
         </button>
 
-        <button data-skill="5" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 6] Hố Đen Refactor Vũ Trụ (75 MP)">
-          <span class="text-sm leading-none">🌌</span>
-          <span class="text-[8px] font-bold text-rose-200 mt-0.5">6.HốĐen</span>
-          <span class="text-[7px] text-sky-300 mono-font">75MP</span>
+        <button data-skill="5" class="skill-slot w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím 6] Lục Đạo Luân Hồi Bàn & Vết Nứt Không Gian (60 MP)">
+          <span class="text-sm leading-none">☸️</span>
+          <span class="text-[8px] font-bold text-rose-200 mt-0.5">6.LuânHồi</span>
+          <span class="text-[7px] text-sky-300 mono-font">60MP</span>
           <div id="cd-overlay-5" class="skill-cd-overlay" style="height: 0%"></div>
         </button>
 
-        <!-- Bình Huyết Đan [Q] hồi HP & Khiên -->
-        <button id="btn-potion-heal" class="skill-slot w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0 border-rose-500/60" title="[Phím Q] Huyết Đan: Hồi +45% HP & Khiên Giáp">
+        <!-- TUYỆT KỸ TỐI THƯỢNG [Phím R]: PHÁP TƯỚNG THIÊN ĐỊA — TIÊN ĐẾ TRẤN THIÊN CHƯỞNG -->
+        <button data-skill="6" class="skill-slot w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0 border-2 border-amber-400" title="[Phím R] Tuyệt Kỹ Tối Thượng: Pháp Tướng Thiên Địa — Tiên Đế Trấn Thiên Chưởng (80 MP)">
+          <span class="text-sm leading-none">🖐️</span>
+          <span class="text-[8px] font-black text-amber-300 mt-0.5">R.TiênĐế</span>
+          <span class="text-[7px] text-amber-200 mono-font">80MP</span>
+          <div id="cd-overlay-6" class="skill-cd-overlay" style="height: 0%"></div>
+        </button>
+
+        <!-- Bình Huyết Đan [Q] -->
+        <button id="btn-potion-heal" class="skill-slot w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0 border-rose-500/60" title="[Phím Q] Huyết Đan: Hồi +45% HP & Đầy Khiên Giáp">
           <span class="text-xs leading-none">🧪</span>
           <span class="text-[8px] font-bold text-rose-300 mt-0.5">Q.Máu</span>
           <span class="text-[7px] text-emerald-300 mono-font">+45%</span>
         </button>
 
-        <!-- Bình Linh Đan [E] hồi MP -->
+        <!-- Bình Linh Đan [E] -->
         <button id="btn-potion-mana" class="skill-slot w-9 h-11 sm:w-10 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0 border-sky-500/60" title="[Phím E] Linh Đan: Hồi +60% Mana (MP)">
           <span class="text-xs leading-none">💧</span>
           <span class="text-[8px] font-bold text-sky-300 mt-0.5">E.Mana</span>
           <span class="text-[7px] text-sky-200 mono-font">+60%</span>
         </button>
 
-        <!-- Lướt Tốc Biến [Space] -->
-        <button id="btn-dash-skill" class="jade-btn w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím Space] Lướt Tốc Biến Miễn Thương (15 MP)">
+        <!-- Ngự Phong Tốc Biến [Space] -->
+        <button id="btn-dash-skill" class="jade-btn w-10 h-11 sm:w-11 sm:h-12 rounded-xl flex flex-col items-center justify-center shrink-0" title="[Phím Space] Súc Địa Thành Thốn — Lướt Miễn Thương (15 MP)">
           <span class="text-sm leading-none">💨</span>
           <span class="text-[8px] font-extrabold text-white mt-0.5">Lướt</span>
           <span class="text-[7px] text-teal-100 mono-font">15MP</span>
         </button>
       </div>
 
-      <!-- Góc dưới phải: Nút chuyển nhanh sang Vùng Đất Tiếp Theo -->
       <div class="pointer-events-auto hidden sm:flex items-center gap-1">
-        <button
-          id="btn-next-zone-quick"
-          class="realm-hud-card px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold text-teal-200 hover:brightness-110"
-          title="Dịch chuyển ngay sang Vùng Đất tiếp theo"
-        >
+        <button id="btn-next-zone-quick" class="realm-hud-card px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold text-teal-200 hover:brightness-110">
           🌀 Sang Vùng Mới ➔
         </button>
       </div>
     </div>
   </div>
 
-  <!-- =================================================================== -->
-  <!-- MODAL 1: BẢN ĐỒ 7 ĐẠI VÙNG ĐẤT (ĐỔI NỀN, KIẾN TRÚC & THỜI TIẾT)     -->
-  <!-- =================================================================== -->
+  <!-- MODAL 1: BẢN ĐỒ 7 ĐẠI VÙNG ĐẤT -->
   <div id="modal-zones" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/85 backdrop-blur-sm">
     <div class="realm-hud-card rounded-t-3xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-5 max-h-[88dvh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-700 pb-2.5">
@@ -588,19 +579,16 @@
             🗺️ Bản Đồ 7 Đại Vùng Đất — Biến Đổi Bầu Trời, Địa Hình &amp; Thời Tiết
           </h2>
           <p class="text-[11px] text-slate-300 mt-0.5">
-            Bạn có thể bay vào <b>Cổng Không Gian</b> ở 2 rìa màn hình hoặc bấm chọn trực tiếp dưới đây để dịch chuyển sang vùng đất mới!
+            Bay vào <b>Cổng Không Gian</b> ở 2 rìa màn hình hoặc bấm chọn trực tiếp dưới đây để dịch chuyển sang vùng đất mới!
           </p>
         </div>
         <button data-close="modal-zones" class="px-2.5 py-1 rounded-lg bg-slate-800 text-amber-200 text-xs font-bold">Đóng ✕</button>
       </div>
-
       <div id="zones-grid-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3"></div>
     </div>
   </div>
 
-  <!-- =================================================================== -->
-  <!-- MODAL 2: BẢNG 7 CẢNH GIỚI ĐỘ KIẾP & ĐỔI GIAO DIỆN NGƯỜI CHƠI        -->
-  <!-- =================================================================== -->
+  <!-- MODAL 2: 7 BẬC ĐỘ KIẾP -->
   <div id="modal-realms" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/85 backdrop-blur-sm">
     <div class="realm-hud-card rounded-t-3xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-5 max-h-[88dvh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-700 pb-2.5">
@@ -609,7 +597,7 @@
             ⚡ 7 Bậc Độ Kiếp — Lột Xác Ngoại Hình &amp; Giao Diện Người Chơi
           </h2>
           <p class="text-[11px] text-slate-300 mt-0.5">
-            Mỗi lần Độ Kiếp thành công sẽ thay đổi hoàn toàn Đạo Bào, Mũ Mão, Pháp Tướng và Giao Diện HUD!
+            Mỗi lần Độ Kiếp sẽ giáng Cửu Thiên Thần Lôi và thay đổi hoàn toàn Đạo Bào, Pháp Tướng và Giao Diện HUD!
           </p>
         </div>
         <button data-close="modal-realms" class="px-2.5 py-1 rounded-lg bg-slate-800 text-amber-200 text-xs font-bold">Đóng ✕</button>
@@ -634,14 +622,12 @@
     </div>
   </div>
 
-  <!-- =================================================================== -->
-  <!-- MODAL 3: NGĂN KÉO TỔNG HỢP (CỐT TRUYỆN, 12 SKIN, GIÁP +15, PHÁP BẢO) -->
-  <!-- =================================================================== -->
+  <!-- MODAL 3: CÀN KHÔN TÚI (CỐT TRUYỆN, 12 SKIN, GIÁP +15, 8 PHÁP BẢO, BÍ KÍP & QUIZ IT) -->
   <div id="modal-hub" class="hidden fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/85 backdrop-blur-sm">
     <div class="realm-hud-card rounded-t-3xl sm:rounded-3xl max-w-2xl w-full p-4 sm:p-5 max-h-[88dvh] flex flex-col">
       <div class="flex items-center justify-between border-b border-slate-700 pb-2">
         <h2 class="serif-title text-base sm:text-lg font-bold text-amber-300">
-          🎒 Càn Khôn Túi — Cốt Truyện, 12 Skin, Giáp (+15), Pháp Bảo &amp; Bí Kíp
+          🎒 Càn Khôn Túi — Cốt Truyện, 12 Skin, Giáp (+15), 8 Pháp Bảo &amp; Bí Kíp IT
         </h2>
         <button data-close="modal-hub" class="px-2.5 py-1 rounded-lg bg-slate-800 text-amber-200 text-xs font-bold">Đóng ✕</button>
       </div>
@@ -666,7 +652,7 @@
           👹 Boss &amp; PvP
         </button>
         <button data-hub-tab="scriptures" class="hub-tab-btn realm-btn px-2.5 py-1.5 rounded-xl text-[11px] font-bold">
-          📚 Bí Kíp &amp; Quẻ
+          📚 Bí Kíp &amp; Quiz IT
         </button>
         <button data-hub-tab="share" class="hub-tab-btn realm-btn px-2.5 py-1.5 rounded-xl text-[11px] font-bold">
           🧧 Xuất Thiệp
@@ -677,15 +663,36 @@
     </div>
   </div>
 
-  <!-- =================================================================== -->
-  <!-- MÃ NGUỒN ENGINE 2D CANVAS — 7 ĐẠI VÙNG ĐẤT & CHIẾN ĐẤU THỰC TẾ      -->
-  <!-- =================================================================== -->
+  <!-- MÃ NGUỒN ENGINE 2D CANVAS — TIÊN HIỆP CHÂN TRUYỀN -->
   <script>
     // =========================================================================
-    // PHẦN 1: DỮ LIỆU 7 ĐẠI VÙNG ĐẤT (BIOMES) VỚI MÀU NỀN & KIẾN TRÚC RIÊNG BIỆT
+    // 0. POLYFILL AN TOÀN CHO ROUNDRECT ĐỂ KHÔNG BAO GIỜ LỖI TRÊN MỌI TRÌNH DUYỆT
     // =========================================================================
-    const STORAGE_KEY = 'tutien_it_2d_7zones_v5';
+    function drawRoundRect(ctx, x, y, w, h, r) {
+      const radius = Math.max(0, Math.min(r || 4, Math.min(w, h) / 2));
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + w, y, x + w, y + h, radius);
+      ctx.arcTo(x + w, y + h, x, y + h, radius);
+      ctx.arcTo(x, y + h, x, y, radius);
+      ctx.arcTo(x, y, x + w, y, radius);
+      ctx.closePath();
+    }
+    if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+        const radius = Array.isArray(r) ? r[0] : (r || 0);
+        drawRoundRect(this, x, y, w, h, radius);
+        return this;
+      };
+    }
+
+    // =========================================================================
+    // 1. DỮ LIỆU 7 ĐẠI VÙNG ĐẤT, 7 CHƯƠNG CỐT TRUYỆN, 7 CẢNH GIỚI & 12 SKIN
+    // =========================================================================
+    const STORAGE_KEY = 'tutien_it_xianxia_v6';
     const CHARACTER_SCALE = 0.65;
+    const BAGUA_RUNES = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
+    const SIX_PATHS_KANJI = ['天', '人', '修', '畜', '鬼', '獄'];
 
     const WORLD_ZONES = [
       {
@@ -701,7 +708,6 @@
         mountainColor: '#072a2e',
         mountainHighlight: '#14b8a6',
         celestialType: 'jade_moon',
-        celestialColor: '#99f6e4',
         weatherType: 'fireflies',
         weatherColor: '#5eead4',
         landmarkType: 'server_pagoda',
@@ -723,7 +729,6 @@
         mountainColor: '#572207',
         mountainHighlight: '#f59e0b',
         celestialType: 'blood_sun',
-        celestialColor: '#fde047',
         weatherType: 'sandstorm',
         weatherColor: '#fcd34d',
         landmarkType: 'legacy_pyramid',
@@ -745,7 +750,6 @@
         mountainColor: '#1f1235',
         mountainHighlight: '#a3e635',
         celestialType: 'crescent_purple',
-        celestialColor: '#e879f9',
         weatherType: 'toxic_bubbles',
         weatherColor: '#84cc16',
         landmarkType: 'spider_swamp',
@@ -767,7 +771,6 @@
         mountainColor: '#4c0519',
         mountainHighlight: '#fb7185',
         celestialType: 'lava_eclipse',
-        celestialColor: '#fb923c',
         weatherType: 'embers',
         weatherColor: '#f97316',
         landmarkType: 'volcano_gpu',
@@ -789,7 +792,6 @@
         mountainColor: '#0c3b66',
         mountainHighlight: '#7dd3fc',
         celestialType: 'aurora',
-        celestialColor: '#38bdf8',
         weatherType: 'snowflakes',
         weatherColor: '#e0f2fe',
         landmarkType: 'ice_palace',
@@ -811,7 +813,6 @@
         mountainColor: '#1e295b',
         mountainHighlight: '#93c5fd',
         celestialType: 'thunder_eye',
-        celestialColor: '#60a5fa',
         weatherType: 'electric_sparks',
         weatherColor: '#fde047',
         landmarkType: 'floating_islands',
@@ -833,7 +834,6 @@
         mountainColor: '#2e0846',
         mountainHighlight: '#f0abfc',
         celestialType: 'black_hole',
-        celestialColor: '#f472b6',
         weatherType: 'cosmic_dust',
         weatherColor: '#f5d0fe',
         landmarkType: 'quantum_nexus',
@@ -844,118 +844,24 @@
       }
     ];
 
-    // =========================================================================
-    // PHẦN 2: 7 CHƯƠNG CỐT TRUYỆN CHÍNH TUYẾN GẮN LIỀN VỚI 7 VÙNG ĐẤT
-    // =========================================================================
     const STORY_CHAPTERS = [
-      {
-        id: 0,
-        zoneId: 0,
-        title: 'Chương 1: Khởi Đạo Sơn Môn',
-        shortGoal: 'Ch.1: Diệt 5 Bug 404 tại Sơn Môn',
-        targetType: 'kill',
-        targetCount: 5,
-        rewardQi: 180,
-        speaker: '🧙‍♂️ Chưởng Môn Thích Clean Code',
-        avatar: '🧙‍♂️',
-        introText: 'Chào mừng đệ tử nhập môn! Linh mạch tại [Sơn Môn Server] đang bị đám 🐞 Bug 404 quấy nhiễu. Hãy vận dụng Linh Lực (MP) tiêu diệt 5 tên để khai thông kinh mạch!',
-        completeText: 'Khá lắm! Kinh mạch Sơn Môn đã thông suốt. Hãy tiến qua Cổng Không Gian sang [Vùng 2: Hoang Mạc Code Legacy]!'
-      },
-      {
-        id: 1,
-        zoneId: 1,
-        title: 'Chương 2: Bão Cát Hoang Mạc Legacy',
-        shortGoal: 'Ch.2: Diệt 8 Quái ở Hoang Mạc',
-        targetType: 'kill',
-        targetCount: 8,
-        rewardQi: 320,
-        speaker: '🔨 Đại Sư Âu Dã DevOps',
-        avatar: '🔨',
-        introText: 'Chúng ta đã đặt chân tới [Hoang Mạc Code Legacy]! Bầu trời cam rực này ẩn chứa vô số đoạn mã cổ đại không tài liệu. Hãy quét sạch 8 Tâm Ma tại đây!',
-        completeText: 'Hoang Mạc Legacy đã được Refactor sạch gọn! Hãy chuẩn bị tiến vào [Vùng 3: Đầm Lầy Độc Nhện SQLi]!'
-      },
-      {
-        id: 2,
-        zoneId: 2,
-        title: 'Chương 3: Đầm Lầy Độc Nhện SQLi',
-        shortGoal: 'Ch.3: Diệt 10 Nhện Độc Đầm Lầy',
-        targetType: 'kill',
-        targetCount: 10,
-        rewardQi: 500,
-        speaker: '🛡️ Trưởng Lão Tàng Kinh Các',
-        avatar: '📚',
-        introText: 'Cẩn thận độc khí! [Đầm Lầy Độc Nhện SQLi] chuyên bắn các luồng truy vấn bẩn để phá vỡ Khiên Giáp WAF. Hãy dùng Parameterized Query tiêu diệt 10 quái!',
-        completeText: 'Tường lửa WAF đã chặn đứng mọi mũi tiêm độc SQLi! Phía trước là [Vùng 4: Hỏa Diệm Sơn Overclock 99°C]!'
-      },
-      {
-        id: 3,
-        zoneId: 3,
-        title: 'Chương 4: Hỏa Diệm Sơn Overclock 99°C',
-        shortGoal: 'Ch.4: Hạ Boss Hắc Ám Ma Vương',
-        targetType: 'boss',
-        bossIndex: 0,
-        targetCount: 1,
-        rewardQi: 800,
-        speaker: '👹 Hắc Ám Ma Vương (Boss)',
-        avatar: '👹',
-        introText: 'Hahaha! Chào mừng tới [Hỏa Diệm Sơn Overclock 99°C]! Ta sẽ đốt cháy cụm Server của ngươi vào lúc 17h59 chiều Thứ Sáu! Xem ngươi né Vòng Lửa Đỏ của ta thế nào!',
-        completeText: 'Hắc Ám Ma Vương đã bị phong ấn! Nhiệt độ CPU hạ xuống mức an toàn. Tiến thẳng tới [Vùng 5: Băng Cung Cold-Storage]!'
-      },
-      {
-        id: 4,
-        zoneId: 4,
-        title: 'Chương 5: Băng Cung Cold-Storage -273°C',
-        shortGoal: 'Ch.5: Hạ Boss Cửu Đầu Xà Botnet',
-        targetType: 'boss',
-        bossIndex: 1,
-        targetCount: 1,
-        rewardQi: 1200,
-        speaker: '🐍 Cửu Đầu Xà Botnet DDoS',
-        avatar: '🐍',
-        introText: 'Tại [Băng Cung Cold-Storage] dưới ánh cực quang này, 100 Tbps lưu lượng rác của ta sẽ đóng băng hoàn toàn kho Sao Lưu 3-2-1 của nhà ngươi!',
-        completeText: 'Cửu Đầu Xà Botnet đã tan xác dưới kiếm trận Anycast CDN! Hãy bay lên [Vùng 6: Lôi Đài Cửu Thiên Cloud-Native]!'
-      },
-      {
-        id: 5,
-        zoneId: 5,
-        title: 'Chương 6: Lôi Đài Cửu Thiên Cloud',
-        shortGoal: 'Ch.6: Thắng PvP Nam Cung CTO',
-        targetType: 'pvp',
-        pvpIndex: 3,
-        targetCount: 1,
-        rewardQi: 1800,
-        speaker: '🌌 Nam Cung CTO [+15]',
-        avatar: '⚔️',
-        introText: 'Giữa quần đảo [Lôi Đài Cửu Thiên Cloud-Native] đầy sấm sét, hãy đấu với ta một trận công bằng để chứng minh đạo tâm Kiến Trúc Sư của ngươi!',
-        completeText: 'Kiếm pháp Zero-Downtime của đạo hữu thật đáng nể! Cánh cổng dẫn vào [Vùng 7: Hư Không Lượng Tử Zero-Day] đã mở!'
-      },
-      {
-        id: 6,
-        zoneId: 6,
-        title: 'Chương 7: Đại Chiến Hư Không Lượng Tử',
-        shortGoal: 'Ch.7: Diệt Thiên Đạo Tâm Ma Deadline',
-        targetType: 'boss',
-        bossIndex: 3,
-        targetCount: 1,
-        rewardQi: 3500,
-        speaker: '👁️ Thiên Đạo Tâm Ma — Deadline 00:00',
-        avatar: '👁️',
-        introText: 'Ngươi đã bước vào [Hư Không Lượng Tử Zero-Day]! Ta chính là Tâm Ma lớn nhất đời lập trình viên: Yêu cầu đổi toàn bộ kiến trúc lúc 00:00 đêm trước giờ Go-Live!',
-        completeText: '🎉 CHÚC MỪNG ĐẠO HỮU ĐÃ PHÁ ĐẢO 7 CHƯƠNG CỐT TRUYỆN & CHINH PHỤC TRỌN VẸN 7 ĐẠI VÙNG ĐẤT TU TIÊN IT!'
-      }
+      { id: 0, zoneId: 0, title: 'Chương 1: Khởi Đạo Sơn Môn', shortGoal: 'Ch.1: Diệt 5 Bug 404 tại Sơn Môn', targetType: 'kill', targetCount: 5, rewardQi: 180, speaker: '🧙‍♂️ Chưởng Môn Thích Clean Code', avatar: '🧙‍♂️', introText: 'Chào mừng đệ tử nhập môn! Linh mạch tại [Sơn Môn Server] đang bị đám 🐞 Bug 404 quấy nhiễu. Hãy vận dụng Kiếm Khí & Tiên Thuật tiêu diệt 5 tên để khai thông kinh mạch!', completeText: 'Khá lắm! Kinh mạch Sơn Môn đã thông suốt. Hãy tiến sang [Vùng 2: Hoang Mạc Code Legacy]!' },
+      { id: 1, zoneId: 1, title: 'Chương 2: Bão Cát Hoang Mạc Legacy', shortGoal: 'Ch.2: Diệt 8 Quái ở Hoang Mạc', targetType: 'kill', targetCount: 8, rewardQi: 320, speaker: '🔨 Đại Sư Âu Dã DevOps', avatar: '🔨', introText: 'Chúng ta đã đặt chân tới [Hoang Mạc Code Legacy]! Bầu trời cam rực này ẩn chứa vô số đoạn mã cổ đại 10 năm không tài liệu. Hãy quét sạch 8 Tâm Ma tại đây!', completeText: 'Hoang Mạc Legacy đã được Refactor sạch gọn! Hãy tiến vào [Vùng 3: Đầm Lầy Độc Nhện SQLi]!' },
+      { id: 2, zoneId: 2, title: 'Chương 3: Đầm Lầy Độc Nhện SQLi', shortGoal: 'Ch.3: Diệt 10 Nhện Độc Đầm Lầy', targetType: 'kill', targetCount: 10, rewardQi: 500, speaker: '🛡️ Trưởng Lão Tàng Kinh Các', avatar: '📚', introText: 'Cẩn thận độc khí! [Đầm Lầy Độc Nhện SQLi] chuyên bắn các luồng truy vấn bẩn để phá vỡ Khiên Giáp WAF. Hãy dùng Parameterized Query tiêu diệt 10 quái!', completeText: 'Tường lửa WAF đã chặn đứng mọi mũi tiêm độc SQLi! Phía trước là [Vùng 4: Hỏa Diệm Sơn Overclock 99°C]!' },
+      { id: 3, zoneId: 3, title: 'Chương 4: Hỏa Diệm Sơn Overclock 99°C', shortGoal: 'Ch.4: Hạ Boss Hắc Ám Ma Vương', targetType: 'boss', bossIndex: 0, targetCount: 1, rewardQi: 800, speaker: '👹 Hắc Ám Ma Vương (Boss)', avatar: '👹', introText: 'Hahaha! Chào mừng tới [Hỏa Diệm Sơn Overclock 99°C]! Ta sẽ đốt cháy cụm Server của ngươi vào lúc 17h59 chiều Thứ Sáu! Xem ngươi né Vòng Lửa Đỏ của ta thế nào!', completeText: 'Hắc Ám Ma Vương đã bị phong ấn! Nhiệt độ CPU hạ xuống mức an toàn. Tiến thẳng tới [Vùng 5: Băng Cung Cold-Storage]!' },
+      { id: 4, zoneId: 4, title: 'Chương 5: Băng Cung Cold-Storage -273°C', shortGoal: 'Ch.5: Hạ Boss Cửu Đầu Xà Botnet', targetType: 'boss', bossIndex: 1, targetCount: 1, rewardQi: 1200, speaker: '🐍 Cửu Đầu Xà Botnet DDoS', avatar: '🐍', introText: 'Tại [Băng Cung Cold-Storage] dưới ánh cực quang này, 100 Tbps lưu lượng rác của ta sẽ đóng băng hoàn toàn kho Sao Lưu 3-2-1 của nhà ngươi!', completeText: 'Cửu Đầu Xà Botnet đã tan xác dưới kiếm trận Anycast CDN! Hãy bay lên [Vùng 6: Lôi Đài Cửu Thiên Cloud-Native]!' },
+      { id: 5, zoneId: 5, title: 'Chương 6: Lôi Đài Cửu Thiên Cloud', shortGoal: 'Ch.6: Thắng PvP Nam Cung CTO', targetType: 'pvp', pvpIndex: 3, targetCount: 1, rewardQi: 1800, speaker: '🌌 Nam Cung CTO [+15]', avatar: '⚔️', introText: 'Giữa quần đảo [Lôi Đài Cửu Thiên Cloud-Native] đầy sấm sét, hãy đấu với ta một trận công bằng để chứng minh đạo tâm Kiến Trúc Sư của ngươi!', completeText: 'Kiếm pháp Zero-Downtime của đạo hữu thật đáng nể! Cánh cổng dẫn vào [Vùng 7: Hư Không Lượng Tử Zero-Day] đã mở!' },
+      { id: 6, zoneId: 6, title: 'Chương 7: Đại Chiến Hư Không Lượng Tử', shortGoal: 'Ch.7: Diệt Thiên Đạo Tâm Ma Deadline', targetType: 'boss', bossIndex: 3, targetCount: 1, rewardQi: 3500, speaker: '👁️ Thiên Đạo Tâm Ma — Deadline 00:00', avatar: '👁️', introText: 'Ngươi đã bước vào [Hư Không Lượng Tử Zero-Day]! Ta chính là Tâm Ma lớn nhất đời lập trình viên: Yêu cầu đổi toàn bộ kiến trúc lúc 00:00 đêm trước giờ Go-Live!', completeText: '🎉 CHÚC MỪNG ĐẠO HỮU ĐÃ PHÁ ĐẢO 7 CHƯƠNG CỐT TRUYỆN & CHINH PHỤC TRỌN VẸN 7 ĐẠI VÙNG ĐẤT TU TIÊN IT!' }
     ];
 
-    // =========================================================================
-    // PHẦN 3: 7 CẢNH GIỚI ĐỘ KIẾP, 12 BỘ SKIN, 6 HỆ PHÁI & 4 CHIẾN GIÁP
-    // =========================================================================
     const REALMS = [
-      { tier: 0, name: 'Luyện Khí (Intern)', req: 150, mult: 1.0, icon: '🌱', title: 'Thực tập sinh áo vải lam, thẻ Intern xanh lá', uiPrimary: '#64748b', uiSecondary: '#94a3b8', uiGlow: 'rgba(100, 116, 139, 0.38)', uiBg: 'rgba(15, 23, 42, 0.88)', robeOverride: '#334155', trimOverride: '#94a3b8', headgear: 'none', backVisual: 'none' },
-      { tier: 1, name: 'Trúc Cơ (Junior)', req: 350, mult: 1.45, icon: '🎋', title: 'Đạo bào Ngọc Bích, đai trán Trúc Cơ, pháp trận Lục Bảo', uiPrimary: '#10b981', uiSecondary: '#6ee7b7', uiGlow: 'rgba(16, 185, 129, 0.48)', uiBg: 'rgba(6, 38, 32, 0.90)', robeOverride: '#065f46', trimOverride: '#6ee7b7', headgear: 'headband', backVisual: 'jade_ring' },
-      { tier: 2, name: 'Kim Đan (Mid-Level)', req: 700, mult: 2.1, icon: '🔮', title: 'Chiến bào Lam Kim, mũ quan Kim Đan, 3 viên Kim Đan Vàng', uiPrimary: '#0ea5e9', uiSecondary: '#facc15', uiGlow: 'rgba(14, 165, 233, 0.52)', uiBg: 'rgba(12, 31, 56, 0.90)', robeOverride: '#0369a1', trimOverride: '#fde047', headgear: 'gold_crown', backVisual: 'three_pills' },
-      { tier: 3, name: 'Nguyên Anh (Senior)', req: 1200, mult: 3.0, icon: '👶', title: 'Tiên y Tử Tinh, mão bạc Senior, Tiểu Nguyên Anh trên vai', uiPrimary: '#a855f7', uiSecondary: '#e879f9', uiGlow: 'rgba(168, 85, 247, 0.55)', uiBg: 'rgba(36, 14, 58, 0.90)', robeOverride: '#581c87', trimOverride: '#f0abfc', headgear: 'spirit_crown', backVisual: 'nascent_soul' },
-      { tier: 4, name: 'Hóa Thần (Tech Lead)', req: 2000, mult: 4.2, icon: '🔥', title: 'Long bào Đỏ Chu Sa, Vương miện Hóa Thần, Thần Luân Lửa', uiPrimary: '#f43f5e', uiSecondary: '#fde047', uiGlow: 'rgba(244, 63, 94, 0.58)', uiBg: 'rgba(54, 12, 26, 0.92)', robeOverride: '#9f1239', trimOverride: '#fde047', headgear: 'emperor_crown', backVisual: 'fire_halo' },
-      { tier: 5, name: 'Đại Thừa (Architect)', req: 3200, mult: 6.0, icon: '🪽', title: 'Thánh y Bạch Kim Tinh Hà, 6 Cánh Ánh Sáng Cáp Quang', uiPrimary: '#38bdf8', uiSecondary: '#f8fafc', uiGlow: 'rgba(56, 189, 248, 0.65)', uiBg: 'rgba(10, 28, 52, 0.92)', robeOverride: '#0f172a', trimOverride: '#38bdf8', headgear: 'celestial_halo', backVisual: 'six_wings' },
-      { tier: 6, name: 'Độ Kiếp CTO (Sư Tổ)', req: 999999, mult: 9.0, icon: '🐉', title: 'Thần Trang Thái Ất Vũ Trụ RGB, 8 Cánh Hoàng Kim & 9 Sao Cửu Diệu', uiPrimary: '#facc15', uiSecondary: '#2dd4bf', uiGlow: 'rgba(250, 204, 21, 0.72)', uiBg: 'rgba(24, 18, 8, 0.92)', robeOverride: '#422006', trimOverride: '#fde047', headgear: 'supreme_crown', backVisual: 'nine_suns_wings' }
+      { tier: 0, name: 'Luyện Khí (Intern)', req: 150, mult: 1.0, icon: '🌱', title: 'Thực tập sinh áo vải lam, thẻ Intern xanh lá', uiPrimary: '#64748b', uiSecondary: '#94a3b8', uiGlow: 'rgba(100, 116, 139, 0.38)', uiBg: 'rgba(15, 23, 42, 0.88)', robeOverride: '#334155', trimOverride: '#94a3b8', backVisual: 'none' },
+      { tier: 1, name: 'Trúc Cơ (Junior)', req: 350, mult: 1.45, icon: '🎋', title: 'Đạo bào Ngọc Bích, đai trán Trúc Cơ, pháp trận Lục Bảo', uiPrimary: '#10b981', uiSecondary: '#6ee7b7', uiGlow: 'rgba(16, 185, 129, 0.48)', uiBg: 'rgba(6, 38, 32, 0.90)', robeOverride: '#065f46', trimOverride: '#6ee7b7', backVisual: 'jade_ring' },
+      { tier: 2, name: 'Kim Đan (Mid-Level)', req: 700, mult: 2.1, icon: '🔮', title: 'Chiến bào Lam Kim, mũ quan Kim Đan, 3 viên Kim Đan Vàng xoay sau lưng', uiPrimary: '#0ea5e9', uiSecondary: '#facc15', uiGlow: 'rgba(14, 165, 233, 0.52)', uiBg: 'rgba(12, 31, 56, 0.90)', robeOverride: '#0369a1', trimOverride: '#fde047', backVisual: 'three_pills' },
+      { tier: 3, name: 'Nguyên Anh (Senior)', req: 1200, mult: 3.0, icon: '👶', title: 'Tiên y Tử Tinh, mão bạc Senior, Tiểu Nguyên Anh bay lơ lửng trên vai', uiPrimary: '#a855f7', uiSecondary: '#e879f9', uiGlow: 'rgba(168, 85, 247, 0.55)', uiBg: 'rgba(36, 14, 58, 0.90)', robeOverride: '#581c87', trimOverride: '#f0abfc', backVisual: 'nascent_soul' },
+      { tier: 4, name: 'Hóa Thần (Tech Lead)', req: 2000, mult: 4.2, icon: '🔥', title: 'Long bào Đỏ Chu Sa, Vương miện Hóa Thần, Vòng Thần Luân Rực Lửa', uiPrimary: '#f43f5e', uiSecondary: '#fde047', uiGlow: 'rgba(244, 63, 94, 0.58)', uiBg: 'rgba(54, 12, 26, 0.92)', robeOverride: '#9f1239', trimOverride: '#fde047', backVisual: 'fire_halo' },
+      { tier: 5, name: 'Đại Thừa (Architect)', req: 3200, mult: 6.0, icon: '🪽', title: 'Thánh y Bạch Kim Tinh Hà, 6 Cánh Ánh Sáng Cáp Quang đập cánh sau lưng', uiPrimary: '#38bdf8', uiSecondary: '#f8fafc', uiGlow: 'rgba(56, 189, 248, 0.65)', uiBg: 'rgba(10, 28, 52, 0.92)', robeOverride: '#0f172a', trimOverride: '#38bdf8', backVisual: 'six_wings' },
+      { tier: 6, name: 'Độ Kiếp CTO (Sư Tổ)', req: 999999, mult: 9.0, icon: '🐉', title: 'Thần Trang Thái Ất Vũ Trụ RGB, 8 Cánh Hoàng Kim & 9 Sao Cửu Diệu', uiPrimary: '#facc15', uiSecondary: '#2dd4bf', uiGlow: 'rgba(250, 204, 21, 0.72)', uiBg: 'rgba(24, 18, 8, 0.92)', robeOverride: '#422006', trimOverride: '#fde047', backVisual: 'nine_suns_wings' }
     ];
 
     const HERO_SKINS = [
@@ -974,12 +880,12 @@
     ];
 
     const HERO_CLASSES = [
-      { id: 'backend', name: 'Kiếm Tu Backend', sub: 'Go / Rust', icon: '⚔️', bulletColor: '#fde047', hpBonus: 1.1, mpBonus: 1.0, atkBonus: 1.3, spdBonus: 1.05, fireRate: 0.27, desc: 'Phóng Đại Kiếm Khí xuyên thấu 3 mục tiêu, +30% Bạo kích.' },
-      { id: 'cloud', name: 'Pháp Sư Cloud', sub: 'Kubernetes', icon: '🌩️', bulletColor: '#38bdf8', hpBonus: 1.15, mpBonus: 1.35, atkBonus: 1.2, spdBonus: 1.1, fireRate: 0.29, desc: '+35% Mana (MP) tối đa & hồi MP/Khiên nhanh.' },
-      { id: 'pentest', name: 'Thích Khách Pentest', sub: 'Red Team', icon: '🗡️', bulletColor: '#fb7185', hpBonus: 0.95, mpBonus: 1.05, atkBonus: 1.45, spdBonus: 1.35, fireRate: 0.19, desc: 'Phóng chùm 3 Phi Tiêu Exploit hình quạt cực nhanh.' },
-      { id: 'ai', name: 'Đạo Sĩ AI & Data', sub: 'Neural LLM', icon: '🔮', bulletColor: '#c084fc', hpBonus: 1.05, mpBonus: 1.25, atkBonus: 1.28, spdBonus: 1.12, fireRate: 0.24, desc: 'Triệu hồi Drone AI bắn phụ trợ & giảm 15% MP tốn.' },
-      { id: 'dba', name: 'Hộ Pháp DBA', sub: 'Kim Cang RAID-10', icon: '🛡️', bulletColor: '#fb923c', hpBonus: 1.65, mpBonus: 1.0, atkBonus: 1.15, spdBonus: 0.98, fireRate: 0.31, desc: '+65% Sinh Lực tối đa, giảm sát thương & phản đòn.' },
-      { id: 'frontend', name: 'Cầm Sư Frontend', sub: 'UI/UX 60FPS', icon: '🪕', bulletColor: '#2dd4bf', hpBonus: 1.1, mpBonus: 1.2, atkBonus: 1.2, spdBonus: 1.25, fireRate: 0.22, desc: 'Sóng âm Phím Cơ RGB vừa đánh vừa tự hồi HP & MP.' }
+      { id: 'backend', name: 'Kiếm Tu Backend', sub: 'Go / Rust', icon: '⚔️', bulletColor: '#fde047', hpBonus: 1.1, mpBonus: 1.0, atkBonus: 1.3, spdBonus: 1.05, fireRate: 0.26, desc: 'Phóng Bán Nguyệt Kiếm Khí xuyên thấu 3 mục tiêu, +30% Bạo kích.' },
+      { id: 'cloud', name: 'Pháp Sư Cloud', sub: 'Kubernetes', icon: '🌩️', bulletColor: '#38bdf8', hpBonus: 1.15, mpBonus: 1.35, atkBonus: 1.2, spdBonus: 1.1, fireRate: 0.28, desc: '+35% Mana (MP) tối đa & hồi MP/Khiên nhanh.' },
+      { id: 'pentest', name: 'Thích Khách Pentest', sub: 'Red Team', icon: '🗡️', bulletColor: '#fb7185', hpBonus: 0.95, mpBonus: 1.05, atkBonus: 1.45, spdBonus: 1.35, fireRate: 0.18, desc: 'Phóng chùm 3 Phi Kiếm Exploit hình quạt cực nhanh.' },
+      { id: 'ai', name: 'Đạo Sĩ AI & Data', sub: 'Neural LLM', icon: '🔮', bulletColor: '#c084fc', hpBonus: 1.05, mpBonus: 1.25, atkBonus: 1.28, spdBonus: 1.12, fireRate: 0.23, desc: 'Phóng Phù Lục Chu Sa (敕) & giảm 15% MP tiêu hao.' },
+      { id: 'dba', name: 'Hộ Pháp DBA', sub: 'Kim Cang RAID-10', icon: '🛡️', bulletColor: '#fb923c', hpBonus: 1.65, mpBonus: 1.0, atkBonus: 1.15, spdBonus: 0.98, fireRate: 0.30, desc: '+65% Sinh Lực tối đa, giảm sát thương & phản đòn.' },
+      { id: 'frontend', name: 'Cầm Sư Frontend', sub: 'UI/UX 60FPS', icon: '🪕', bulletColor: '#2dd4bf', hpBonus: 1.1, mpBonus: 1.2, atkBonus: 1.2, spdBonus: 1.25, fireRate: 0.21, desc: 'Kiếm âm Phím Cơ RGB vừa đánh vừa tự hồi HP & MP.' }
     ];
 
     const ARMOR_ITEMS = [
@@ -990,12 +896,13 @@
     ];
 
     const SKILLS = [
-      { id: 0, name: 'Vạn Kiếm', cd: 4.0, mpCost: 25, timer: 0 },
-      { id: 1, name: 'Thần Lôi', cd: 5.5, mpCost: 35, timer: 0 },
-      { id: 2, name: 'Bát Quái', cd: 7.5, mpCost: 45, timer: 0 },
-      { id: 3, name: 'Song Long', cd: 7.0, mpCost: 50, timer: 0 },
-      { id: 4, name: 'Phân Thân', cd: 9.5, mpCost: 60, timer: 0 },
-      { id: 5, name: 'Hố Đen', cd: 11.0, mpCost: 75, timer: 0 }
+      { id: 0, name: '【 VẠN KIẾM QUY TÔNG 】', poem: 'Thiên cương vạn kiếm tề phi, trảm tận thế gian vạn cổ bug!', cd: 4.0, mpCost: 25, timer: 0 },
+      { id: 1, name: '【 CỬU THIÊN THẦN LÔI 】', poem: 'Ngũ Lôi Chính Pháp giáng thế, lôi điện liên hoàn diệt tà ma!', cd: 5.5, mpCost: 30, timer: 0 },
+      { id: 2, name: '【 THÁI CỰC BÁT QUÁI TRẬN 】', poem: 'Âm dương nghịch chuyển, Bát Đóa Kim Liên hộ chân thân!', cd: 7.0, mpCost: 35, timer: 0 },
+      { id: 3, name: '【 BĂNG HỎA CHÂN LONG 】', poem: 'Xích Hỏa – Huyền Băng song long xuất thế, càn quét bát hoang!', cd: 7.5, mpCost: 45, timer: 0 },
+      { id: 4, name: '【 NHẤT KHÍ HÓA TAM THANH 】', poem: 'Ngọc Thanh – Thượng Thanh – Thái Thanh đồng xuất Tiên Quang!', cd: 9.0, mpCost: 50, timer: 0 },
+      { id: 5, name: '【 LỤC ĐẠO LUÂN HỒI BÀN 】', poem: 'Không gian phá toái, Lục Đạo Luân Hồi trấn áp vạn ma!', cd: 10.5, mpCost: 60, timer: 0 },
+      { id: 6, name: '【 TIÊN ĐẾ TRẤN THIÊN CHƯỞNG 】', poem: 'Pháp Tướng Thiên Địa vạn trượng, Tiên Đế Cự Chưởng định càn khôn!', cd: 12.0, mpCost: 80, timer: 0 }
     ];
 
     const BOSS_TEMPLATES = [
@@ -1020,8 +927,29 @@
       { id: 'marshal', name: '⚔️ Chiến Thần Lôi Đài', role: 'Săn Boss & Đấu PvP', xRatio: 0.68, yRatio: 0.68, action: 'arena' }
     ];
 
+    const IT_QUIZ_QUESTIONS = [
+      {
+        q: 'Khi cấu hình cơ sở dữ liệu PostgreSQL trên Cloud VPC, cần đặt ở đâu để bảo mật tối ưu?',
+        opts: ['A. Public Subnet mở cổng 0.0.0.0/0', 'B. Private Subnet không gắn Public IP, chỉ mở cổng từ App Security Group', 'C. Đặt chung máy chủ với Web tĩnh'],
+        ans: 1,
+        explain: 'Chuẩn Hạ tầng & Security: Database luôn đặt trong Private Subnet và giới hạn Security Group theo Least Privilege.'
+      },
+      {
+        q: 'Cách phòng chống lỗ hổng SQL Injection (OWASP Top 10) hiệu quả nhất ở tầng Code là gì?',
+        opts: ['A. Dùng Parameterized Queries / Prepared Statements', 'B. Chỉ kiểm tra bằng JavaScript ở trình duyệt', 'C. Đổi cổng Database sang số khác'],
+        ans: 0,
+        explain: 'Chuẩn Secure Coding: Parameterized Queries tách biệt hoàn toàn câu lệnh SQL và dữ liệu đầu vào.'
+      },
+      {
+        q: 'Quy tắc Sao lưu 3-2-1 (Backup Policy) trong quản trị hạ tầng có ý nghĩa gì?',
+        opts: ['A. 3 bản dữ liệu, 2 loại thiết bị lưu trữ khác nhau, 1 bản lưu Offsite/Cloud độc lập', 'B. Sao lưu 3 lần mỗi 21 ngày', 'C. 3 máy chủ chạy 24/7 trong 1 phòng'],
+        ans: 0,
+        explain: 'Chuẩn DR Policy: 3 bản sao trên 2 phương tiện và 1 bản Offsite bất biến (Immutable) chống Ransomware.'
+      }
+    ];
+
     // =========================================================================
-    // PHẦN 4: QUẢN LÝ TRẠNG THÁI LƯU TRỮ (LOCALSTORAGE)
+    // 2. KHỞI TẠO TRẠNG THÁI NGƯỜI CHƠI & MẢNG HIỆU ỨNG TIÊN HIỆP
     // =========================================================================
     const defaultState = {
       daoName: 'Độc Cô Clean Code',
@@ -1040,7 +968,7 @@
       currentMountLabel: '💻 Laptop Hologram',
       armorId: 'waf',
       enhanceLevel: 3,
-      lastOracle: 'Quẻ Đại Cát #01: Chân nguyên dồi dào, chinh phục 7 Đại Vùng Đất vạn sự hanh thông!'
+      lastOracle: 'Quẻ Đại Cát #01: Chân nguyên dồi dào, Vạn Kiếm Quy Tông trảm sạch vạn bug!'
     };
 
     function loadState() {
@@ -1058,139 +986,12 @@
     }
 
     const state = loadState();
+    let combatMode = 'wave';
 
-    function getCurrentZone() {
-      return WORLD_ZONES[Math.max(0, Math.min(WORLD_ZONES.length - 1, state.zoneIndex))];
-    }
-    function getCurrentChapter() {
-      return STORY_CHAPTERS[Math.max(0, Math.min(STORY_CHAPTERS.length - 1, state.storyChapter))];
-    }
-    function getCurrentClass() {
-      return HERO_CLASSES.find((c) => c.id === state.classId) || HERO_CLASSES[0];
-    }
-    function getCurrentSkin() {
-      return HERO_SKINS.find((s) => s.id === state.skinId) || HERO_SKINS[0];
-    }
-    function getCurrentRealm() {
-      return REALMS[Math.min(state.realmIndex, REALMS.length - 1)];
-    }
-    function getCurrentArmor() {
-      return ARMOR_ITEMS.find((a) => a.id === state.armorId) || ARMOR_ITEMS[0];
-    }
-
-    // Kết hợp hài hòa màu sắc của Vùng Đất Hiện Tại và Cảnh Giới Độ Kiếp lên HUD
-    function applyRealmAndZoneThemeUI() {
-      const r = getCurrentRealm();
-      const z = getCurrentZone();
-      const root = document.documentElement;
-      root.style.setProperty('--realm-primary', z.uiPrimary || r.uiPrimary);
-      root.style.setProperty('--realm-secondary', z.uiSecondary || r.uiSecondary);
-      root.style.setProperty('--realm-glow', r.uiGlow);
-      root.style.setProperty('--realm-bg', z.uiBg || r.uiBg);
-      document.body.setAttribute('data-realm-tier', String(r.tier));
-    }
-
-    function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch (e) {}
-      applyRealmAndZoneThemeUI();
-      syncHud();
-    }
-
-    // =========================================================================
-    // PHẦN 5: ÂM THANH WEB AUDIO SYNTHESIZER
-    // =========================================================================
-    const audio = {
-      ctx: null,
-      muted: false,
-      init() {
-        if (!this.ctx) {
-          const AC = window.AudioContext || window.webkitAudioContext;
-          if (AC) this.ctx = new AC();
-        }
-        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
-      },
-      playShoot(freq = 560) {
-        if (this.muted || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now);
-        osc.frequency.exponentialRampToValueAtTime(190, now + 0.06);
-        g.gain.setValueAtTime(0.028, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-        osc.connect(g).connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.07);
-      },
-      playSkillCast() {
-        if (this.muted || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(310, now);
-        osc.frequency.exponentialRampToValueAtTime(920, now + 0.18);
-        g.gain.setValueAtTime(0.065, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.20);
-        osc.connect(g).connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.21);
-      },
-      playHitHurt() {
-        if (this.muted || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(140, now);
-        osc.frequency.exponentialRampToValueAtTime(52, now + 0.11);
-        g.gain.setValueAtTime(0.06, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        osc.connect(g).connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.13);
-      },
-      playThunder() {
-        if (this.muted || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const g = this.ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(165, now);
-        osc.frequency.exponentialRampToValueAtTime(38, now + 0.35);
-        g.gain.setValueAtTime(0.09, now);
-        g.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
-        osc.connect(g).connect(this.ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.4);
-      },
-      playBell() {
-        if (this.muted || !this.ctx) return;
-        const now = this.ctx.currentTime;
-        [261.6, 523.2, 784].forEach((f, idx) => {
-          const osc = this.ctx.createOscillator();
-          const g = this.ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(f, now);
-          g.gain.setValueAtTime(0.045 / (idx + 1), now);
-          g.gain.exponentialRampToValueAtTime(0.0008, now + 1.2);
-          osc.connect(g).connect(this.ctx.destination);
-          osc.start(now);
-          osc.stop(now + 1.25);
-        });
-      }
-    };
-
-    // =========================================================================
-    // PHẦN 6: KHỞI TẠO CANVAS 2D, TOUCH JOYSTICK & NHÂN VẬT CÓ HP/MP/RESPAWN
-    // =========================================================================
     const canvas = document.getElementById('world-canvas');
     const ctx = canvas.getContext('2d');
-    let W = window.innerWidth;
-    let H = window.innerHeight;
+    let W = Math.max(window.innerWidth, 320);
+    let H = Math.max(window.innerHeight, 480);
     function resizeCanvas() {
       W = Math.max(window.innerWidth, 320);
       H = Math.max(window.innerHeight, 480);
@@ -1199,8 +1000,6 @@
     }
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-
-    let combatMode = 'wave'; // 'wave' | 'boss' | 'pvp' | 'sect'
 
     const hero = {
       x: W * 0.5,
@@ -1212,8 +1011,8 @@
       hp: 1200,
       maxShield: 450,
       shield: 450,
-      maxMp: 300,
-      mp: 300,
+      maxMp: 320,
+      mp: 320,
       isDead: false,
       respawnTimer: 0,
       hurtFlashTimer: 0,
@@ -1221,6 +1020,8 @@
       dashTimer: 0,
       baguaTimer: 0,
       cloneTimer: 0,
+      swordArrayTimer: 0,
+      dharmaAvatarTimer: 0,
       tribulationTimer: 0,
       shootTimer: 0,
       patrolAngle: 0,
@@ -1233,7 +1034,6 @@
       ]
     };
 
-    // Floating Touch Joystick cho Mobile & Tablet
     const touchJoy = {
       active: false,
       id: null,
@@ -1254,14 +1054,182 @@
     ];
 
     const peerQuotes = [
-      'Sang Vùng 4 Hỏa Diệm Sơn nhìn núi lửa phun đẹp mê hồn!',
-      'Nhớ canh thanh MP để tung Vạn Kiếm Quy Tông nhé!',
-      'Cổng Không Gian ở 2 mép màn hình bay vào là qua vùng mới luôn!',
-      'Bộ Skin Tề Thiên Đại Thánh tăng tận 45% sát thương!'
+      'Chiêu [R] Tiên Đế Trấn Thiên Chưởng giáng bàn tay Phật Quang cực mạnh!',
+      'Bấm [1] Vạn Kiếm Quy Tông để lại Kiếm Mộ phát sáng khắp sân!',
+      'Nhớ canh thanh MP và uống Linh Đan [E] khi thi triển đại chiêu nhé!',
+      'Bay qua Cổng Không Gian ở 2 mép màn hình để đổi sang Vùng Đất Mới!'
     ];
 
-    const multiChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('tutien_it_mmo_v5') : null;
+    // Toàn bộ mảng quản lý Thực thể & Hiệu ứng Tiên Hiệp Chân Truyền
+    const enemies = [];
+    const heroBullets = [];
+    const enemyBullets = [];
+    const redTelegraphs = [];
+    const dragons = [];
+    const blackHoles = [];
+    const lightningBolts = [];
+    const groundMandalas = [];
+    const swordGraves = [];
+    const goldenLotuses = [];
+    const immortalBeams = [];
+    const heavenlyPalms = [];
+    const lootGems = [];
+    const particles = [];
+    const floatingTexts = [];
+
+    const weatherParticles = Array.from({ length: 45 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      s: 1.5 + Math.random() * 2.8,
+      phase: Math.random() * Math.PI * 2
+    }));
+
+    const stars = Array.from({ length: 55 }, () => ({
+      x: Math.random(),
+      y: Math.random() * 0.68,
+      r: 0.8 + Math.random() * 1.6,
+      phase: Math.random() * Math.PI * 2
+    }));
+
+    function getCurrentZone() { return WORLD_ZONES[Math.max(0, Math.min(WORLD_ZONES.length - 1, state.zoneIndex))]; }
+    function getCurrentChapter() { return STORY_CHAPTERS[Math.max(0, Math.min(STORY_CHAPTERS.length - 1, state.storyChapter))]; }
+    function getCurrentClass() { return HERO_CLASSES.find((c) => c.id === state.classId) || HERO_CLASSES[0]; }
+    function getCurrentSkin() { return HERO_SKINS.find((s) => s.id === state.skinId) || HERO_SKINS[0]; }
+    function getCurrentRealm() { return REALMS[Math.min(state.realmIndex, REALMS.length - 1)]; }
+    function getCurrentArmor() { return ARMOR_ITEMS.find((a) => a.id === state.armorId) || ARMOR_ITEMS[0]; }
+
+    function applyRealmAndZoneThemeUI() {
+      const r = getCurrentRealm();
+      const z = getCurrentZone();
+      const root = document.documentElement;
+      root.style.setProperty('--realm-primary', z.uiPrimary || r.uiPrimary);
+      root.style.setProperty('--realm-secondary', z.uiSecondary || r.uiSecondary);
+      root.style.setProperty('--realm-glow', r.uiGlow);
+      root.style.setProperty('--realm-bg', z.uiBg || r.uiBg);
+      document.body.setAttribute('data-realm-tier', String(r.tier));
+    }
+
+    function saveState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+      applyRealmAndZoneThemeUI();
+      syncHud();
+    }
+
+    // =========================================================================
+    // 3. HỆ THỐNG ÂM THANH WEB AUDIO SYNTHESIZER (BỌC TRY/CATCH AN TOÀN)
+    // =========================================================================
+    const audio = {
+      ctx: null,
+      muted: false,
+      init() {
+        try {
+          if (!this.ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) this.ctx = new AC();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+        } catch (e) {}
+      },
+      playSwordChant(freq = 680) {
+        if (this.muted || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          osc.frequency.exponentialRampToValueAtTime(1180, now + 0.05);
+          osc.frequency.exponentialRampToValueAtTime(360, now + 0.11);
+          g.gain.setValueAtTime(0.026, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+          osc.connect(g).connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } catch (e) {}
+      },
+      playSkillCast() {
+        if (this.muted || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(980, now + 0.22);
+          g.gain.setValueAtTime(0.065, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+          osc.connect(g).connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } catch (e) {}
+      },
+      playHitHurt() {
+        if (this.muted || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(52, now + 0.11);
+          g.gain.setValueAtTime(0.055, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.connect(g).connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        } catch (e) {}
+      },
+      playThunder() {
+        if (this.muted || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(175, now);
+          osc.frequency.exponentialRampToValueAtTime(36, now + 0.36);
+          g.gain.setValueAtTime(0.085, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+          osc.connect(g).connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.4);
+        } catch (e) {}
+      },
+      playBell() {
+        if (this.muted || !this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          [261.6, 523.2, 784].forEach((f, idx) => {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now);
+            g.gain.setValueAtTime(0.045 / (idx + 1), now);
+            g.gain.exponentialRampToValueAtTime(0.0008, now + 1.1);
+            osc.connect(g).connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 1.15);
+          });
+        } catch (e) {}
+      }
+    };
+
+    // =========================================================================
+    // 4. ĐỒNG BỘ MULTIPLAYER BROADCASTCHANNEL & HIỂN THỊ CHỮ NỔI
+    // =========================================================================
+    const multiChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('tutien_it_mmo_v6') : null;
     const remoteTabPlayers = new Map();
+    const myTabId = 'tab_' + Math.random().toString(36).slice(2, 8);
+
+    function appendChatMessage(sender, text) {
+      const log = document.getElementById('world-chat-log');
+      if (!log) return;
+      const div = document.createElement('div');
+      div.innerHTML = `<b class="text-amber-300">${sender}:</b> <span class="text-slate-200">${text}</span>`;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
     if (multiChannel) {
       multiChannel.onmessage = (ev) => {
         const d = ev.data;
@@ -1273,38 +1241,9 @@
         }
       };
     }
-    const myTabId = 'tab_' + Math.random().toString(36).slice(2, 8);
-
-    const enemies = [];
-    const heroBullets = [];
-    const enemyBullets = [];
-    const redTelegraphs = [];
-    const dragons = [];
-    const blackHoles = [];
-    const lightningBolts = [];
-    const lootGems = [];
-    const particles = [];
-    const floatingTexts = [];
-
-    // Hạt thời tiết đặc trưng cho từng Vùng Đất (45 hạt)
-    const weatherParticles = Array.from({ length: 45 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      s: 1.5 + Math.random() * 2.8,
-      spdX: (Math.random() - 0.5) * 30,
-      spdY: 18 + Math.random() * 35,
-      phase: Math.random() * Math.PI * 2
-    }));
-
-    const stars = Array.from({ length: 55 }, () => ({
-      x: Math.random(),
-      y: Math.random() * 0.68,
-      r: 0.8 + Math.random() * 1.6,
-      phase: Math.random() * Math.PI * 2
-    }));
 
     function spawnDamageText(x, y, text, color = '#fde047', size = 12) {
-      if (floatingTexts.length > 35) floatingTexts.shift();
+      if (floatingTexts.length > 36) floatingTexts.shift();
       floatingTexts.push({
         x: x + (Math.random() - 0.5) * 18,
         y,
@@ -1313,6 +1252,24 @@
         size,
         life: 0.85
       });
+    }
+
+    function showXianxiaCutin(skillName, poem) {
+      const el = document.getElementById('xianxia-cutin');
+      document.getElementById('cutin-skill-name').textContent = skillName;
+      document.getElementById('cutin-skill-poem').textContent = `"${poem}"`;
+      el.classList.add('show');
+      clearTimeout(showXianxiaCutin._t);
+      showXianxiaCutin._t = setTimeout(() => el.classList.remove('show'), 1450);
+    }
+
+    function showBanner(title, sub, duration = 2400) {
+      const box = document.getElementById('center-banner');
+      document.getElementById('center-banner-title').textContent = title;
+      document.getElementById('center-banner-sub').textContent = sub;
+      box.classList.remove('hidden');
+      clearTimeout(showBanner._t);
+      showBanner._t = setTimeout(() => box.classList.add('hidden'), duration);
     }
 
     function addQi(amount, label = '') {
@@ -1336,130 +1293,11 @@
       hero.maxShield = Math.round(armor.shield * realm.mult * enhanceMult);
       hero.shield = Math.min(hero.maxShield, hero.shield);
 
-      hero.maxMp = Math.round(280 * (cls.mpBonus || 1.0) * (1 + state.realmIndex * 0.22));
+      hero.maxMp = Math.round(300 * (cls.mpBonus || 1.0) * (1 + state.realmIndex * 0.22));
       hero.mp = Math.min(hero.maxMp, hero.mp);
 
       applyRealmAndZoneThemeUI();
       syncHud();
-    }
-
-    // =========================================================================
-    // PHẦN 7: HÀM CHUYỂN ĐỔI VÙNG ĐẤT MỚI (ĐỔI MÀU NỀN, THỜI TIẾT & THÔNG BÁO)
-    // =========================================================================
-    function travelToZone(targetZoneIdx, showTransitionEffect = true) {
-      const wrappedIdx = ((targetZoneIdx % WORLD_ZONES.length) + WORLD_ZONES.length) % WORLD_ZONES.length;
-      state.zoneIndex = wrappedIdx;
-      const z = getCurrentZone();
-
-      // Xóa quái cũ và tạo quái thuộc vùng đất mới
-      enemies.length = 0;
-      enemyBullets.length = 0;
-      redTelegraphs.length = 0;
-
-      if (showTransitionEffect) {
-        audio.playBell();
-        const flashEl = document.getElementById('zone-transition-flash');
-        flashEl.style.opacity = '1';
-        setTimeout(() => { flashEl.style.opacity = '0'; }, 380);
-
-        showBanner(
-          `${z.icon} VÙNG ĐẤT MỚI: ${z.name.toUpperCase()}`,
-          z.desc,
-          3200
-        );
-      }
-
-      saveState();
-      if (combatMode === 'wave') {
-        for (let i = 0; i < 5; i++) spawnWaveMonster();
-      }
-    }
-
-    // =========================================================================
-    // PHẦN 8: HỆ THỐNG CỐT TRUYỆN 7 CHƯƠNG & HỘP THOẠI RPG
-    // =========================================================================
-    let activeDialogueCallback = null;
-
-    function openStoryDialogue(speaker, avatar, chapterTag, text, onNext = null) {
-      document.getElementById('dialogue-speaker').textContent = speaker;
-      document.getElementById('dialogue-avatar').textContent = avatar || '🧙‍♂️';
-      document.getElementById('dialogue-chapter-tag').textContent = chapterTag;
-      document.getElementById('dialogue-text').textContent = text;
-      document.getElementById('story-dialogue-modal').classList.remove('hidden');
-      activeDialogueCallback = onNext;
-    }
-
-    document.getElementById('btn-dialogue-next').addEventListener('click', () => {
-      document.getElementById('story-dialogue-modal').classList.add('hidden');
-      if (typeof activeDialogueCallback === 'function') {
-        const cb = activeDialogueCallback;
-        activeDialogueCallback = null;
-        cb();
-      }
-    });
-    document.getElementById('btn-dialogue-skip').addEventListener('click', () => {
-      document.getElementById('story-dialogue-modal').classList.add('hidden');
-      activeDialogueCallback = null;
-    });
-
-    function startCurrentStoryChapter(triggerIntroDialogue = true) {
-      const ch = getCurrentChapter();
-      // Tự động đưa người chơi sang Vùng Đất gắn với Chương Cốt Truyện đó
-      if (state.zoneIndex !== ch.zoneId) {
-        travelToZone(ch.zoneId, true);
-      }
-
-      if (ch.targetType === 'boss') {
-        summonAncientBoss(ch.bossIndex || 0);
-      } else if (ch.targetType === 'pvp') {
-        startPvpDuel(ch.pvpIndex || 0);
-      } else {
-        combatMode = 'wave';
-        updateCombatModeButtons();
-      }
-
-      if (triggerIntroDialogue) {
-        openStoryDialogue(
-          ch.speaker,
-          ch.avatar,
-          `Chương ${ch.id + 1}/7 • ${WORLD_ZONES[ch.zoneId].shortName}`,
-          ch.introText
-        );
-      }
-      syncHud();
-    }
-
-    function advanceStoryProgress(eventType) {
-      const ch = getCurrentChapter();
-      if (!ch || ch.targetType !== eventType) return;
-
-      state.storyProgress = (state.storyProgress || 0) + 1;
-      if (state.storyProgress >= ch.targetCount) {
-        state.storyProgress = 0;
-        addQi(ch.rewardQi, `📖 Hoàn Thành ${ch.title}`);
-        audio.playBell();
-
-        const completedChapter = ch;
-        const hasNext = state.storyChapter < STORY_CHAPTERS.length - 1;
-        if (hasNext) {
-          state.storyChapter++;
-        }
-        saveState();
-
-        openStoryDialogue(
-          completedChapter.speaker,
-          completedChapter.avatar,
-          `Hoàn Thành Chương ${completedChapter.id + 1}/7 (+${completedChapter.rewardQi} Tu Vi)`,
-          completedChapter.completeText,
-          () => {
-            if (hasNext) {
-              startCurrentStoryChapter(true);
-            }
-          }
-        );
-      } else {
-        saveState();
-      }
     }
 
     function syncHud() {
@@ -1490,7 +1328,6 @@
       document.getElementById('hud-kills-count').textContent = state.kills;
       document.getElementById('hud-wave-num').textContent = state.wave;
 
-      // Vùng đất & Cốt truyện trên thanh đỉnh
       document.getElementById('hud-zone-icon').textContent = zone.icon;
       document.getElementById('hud-zone-name').textContent = zone.shortName;
       document.getElementById('hud-story-title').textContent = `${ch.shortGoal} (${Math.min(state.storyProgress, ch.targetCount)}/${ch.targetCount})`;
@@ -1505,11 +1342,11 @@
         tribSub.textContent = state.realmIndex >= REALMS.length - 1 ? 'Đỉnh Phong' : `${qiPct}%`;
       }
 
-      // Kiểm tra trạng thái đủ Mana cho 6 ô kỹ năng
       SKILLS.forEach((sk, idx) => {
         const slotEl = document.querySelector(`.skill-slot[data-skill="${idx}"]`);
         if (slotEl) {
-          slotEl.classList.toggle('no-mana', hero.mp < sk.mpCost);
+          const cost = state.classId === 'ai' ? Math.round(sk.mpCost * 0.85) : sk.mpCost;
+          slotEl.classList.toggle('no-mana', hero.mp < cost);
         }
       });
 
@@ -1526,523 +1363,8 @@
       }
     }
 
-    function showBanner(title, sub, duration = 2400) {
-      const box = document.getElementById('center-banner');
-      document.getElementById('center-banner-title').textContent = title;
-      document.getElementById('center-banner-sub').textContent = sub;
-      box.classList.remove('hidden');
-      clearTimeout(showBanner._t);
-      showBanner._t = setTimeout(() => box.classList.add('hidden'), duration);
-    }
-
     // =========================================================================
-    // PHẦN 9: VẼ BỐI CẢNH ĐẶC TRƯNG CỦA 7 ĐẠI VÙNG ĐẤT TRÊN CANVAS 2D
-    // =========================================================================
-    function drawZoneEnvironment(ctx, zone, elapsed, dt) {
-      // 1) Bầu trời chuyển sắc riêng biệt cho từng Vùng Đất
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-      if (hero.tribulationTimer > 0) {
-        skyGrad.addColorStop(0, '#090414');
-        skyGrad.addColorStop(0.5, '#3b0764');
-        skyGrad.addColorStop(1, '#1e1b4b');
-      } else {
-        skyGrad.addColorStop(0, zone.skyTop);
-        skyGrad.addColorStop(0.58, zone.skyMid);
-        skyGrad.addColorStop(1, zone.skyBottom);
-      }
-      ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      // 2) Sao trời lấp lánh
-      ctx.fillStyle = '#ffffff';
-      stars.forEach((st) => {
-        ctx.globalAlpha = 0.25 + 0.45 * Math.sin(elapsed * 2.4 + st.phase);
-        ctx.beginPath();
-        ctx.arc(st.x * W, st.y * H, st.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-
-      // 3) Thiên tượng đặc trưng trên bầu trời (Mặt trăng ngọc, Mặt trời máu, Cực quang, Hố đen...)
-      const cx = W * 0.78;
-      const cy = H * 0.20;
-      ctx.save();
-      if (zone.celestialType === 'jade_moon') {
-        ctx.fillStyle = 'rgba(153, 246, 228, 0.18)';
-        ctx.beginPath(); ctx.arc(cx, cy, 52, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ccfbf1';
-        ctx.beginPath(); ctx.arc(cx, cy, 32, 0, Math.PI * 2); ctx.fill();
-      } else if (zone.celestialType === 'blood_sun') {
-        ctx.fillStyle = 'rgba(251, 146, 60, 0.24)';
-        ctx.beginPath(); ctx.arc(cx, cy, 68, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#f97316';
-        ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI * 2); ctx.fill();
-      } else if (zone.celestialType === 'crescent_purple') {
-        ctx.fillStyle = '#e879f9';
-        ctx.beginPath(); ctx.arc(cx, cy, 34, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = zone.skyTop;
-        ctx.beginPath(); ctx.arc(cx - 12, cy - 6, 30, 0, Math.PI * 2); ctx.fill();
-      } else if (zone.celestialType === 'lava_eclipse') {
-        ctx.strokeStyle = '#fb7185';
-        ctx.lineWidth = 5;
-        ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#4c0519';
-        ctx.beginPath(); ctx.arc(cx, cy, 34, 0, Math.PI * 2); ctx.fill();
-      } else if (zone.celestialType === 'aurora') {
-        for (let a = 0; a < 3; a++) {
-          ctx.strokeStyle = a % 2 === 0 ? 'rgba(56, 189, 248, 0.35)' : 'rgba(52, 211, 153, 0.32)';
-          ctx.lineWidth = 14;
-          ctx.beginPath();
-          ctx.moveTo(W * 0.15, H * (0.14 + a * 0.05));
-          ctx.bezierCurveTo(
-            W * 0.4, H * (0.06 + Math.sin(elapsed + a) * 0.05),
-            W * 0.65, H * (0.24 - Math.cos(elapsed + a) * 0.05),
-            W * 0.88, H * (0.12 + a * 0.04)
-          );
-          ctx.stroke();
-        }
-      } else if (zone.celestialType === 'thunder_eye') {
-        ctx.strokeStyle = '#93c5fd';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.ellipse(cx, cy, 48, 22, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#60a5fa';
-        ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
-      } else if (zone.celestialType === 'black_hole') {
-        ctx.translate(cx, cy);
-        ctx.rotate(elapsed * 1.5);
-        ctx.strokeStyle = '#f472b6';
-        ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.ellipse(0, 0, 56, 18, 0.3, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#090114';
-        ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.restore();
-
-      // 4) Dãy núi xa phía chân trời theo màu Vùng Đất
-      const horizonY = H * 0.42;
-      ctx.fillStyle = zone.mountainColor;
-      ctx.strokeStyle = zone.mountainHighlight;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(0, horizonY);
-      const peaks = [0.12, 0.26, 0.42, 0.58, 0.74, 0.88, 1.0];
-      peaks.forEach((px, idx) => {
-        const peakH = (idx % 2 === 0 ? 55 : 32) + Math.sin(idx * 1.7 + state.zoneIndex) * 14;
-        ctx.lineTo(W * (px - 0.07), horizonY - peakH);
-        ctx.lineTo(W * px, horizonY);
-      });
-      ctx.lineTo(W, H);
-      ctx.lineTo(0, H);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // 5) Mặt đất & Lưới Linh Mạch của Vùng Đất
-      ctx.fillStyle = zone.groundColor;
-      ctx.fillRect(0, horizonY, W, H - horizonY);
-
-      ctx.strokeStyle = zone.gridColor;
-      ctx.lineWidth = 1;
-      for (let gy = horizonY; gy < H; gy += 38) {
-        ctx.beginPath();
-        ctx.moveTo(0, gy);
-        ctx.lineTo(W, gy);
-        ctx.stroke();
-      }
-      for (let gx = 0; gx <= W; gx += 68) {
-        ctx.beginPath();
-        ctx.moveTo(gx, horizonY);
-        ctx.lineTo((gx - W * 0.5) * 1.45 + W * 0.5, H);
-        ctx.stroke();
-      }
-
-      // 6) Kiến trúc trung tâm (Landmark) đặc trưng cho từng Vùng Đất
-      ctx.save();
-      ctx.translate(W * 0.5, horizonY - 4);
-      if (zone.landmarkType === 'server_pagoda') {
-        // Vùng 1: Tháp Server Linh Thạch 3 tầng
-        ctx.fillStyle = '#0f766e';
-        ctx.strokeStyle = '#5eead4';
-        ctx.lineWidth = 2;
-        [-28, 0, 28].forEach((tx, idx) => {
-          const h = idx === 1 ? 58 : 40;
-          ctx.fillRect(tx - 10, -h, 20, h);
-          ctx.strokeRect(tx - 10, -h, 20, h);
-        });
-      } else if (zone.landmarkType === 'legacy_pyramid') {
-        // Vùng 2: Kim Tự Tháp Code Legacy
-        ctx.fillStyle = '#9a3412';
-        ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-65, 4);
-        ctx.lineTo(0, -64);
-        ctx.lineTo(65, 4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-      } else if (zone.landmarkType === 'spider_swamp') {
-        // Vùng 3: Mạng nhện khổng lồ SQLi
-        ctx.strokeStyle = 'rgba(163, 230, 53, 0.55)';
-        ctx.lineWidth = 1.6;
-        for (let r = 16; r <= 56; r += 14) {
-          ctx.beginPath(); ctx.arc(0, -24, r, 0, Math.PI * 2); ctx.stroke();
-        }
-      } else if (zone.landmarkType === 'volcano_gpu') {
-        // Vùng 4: Miệng núi lửa phun dung nham Overclock 99°C
-        ctx.fillStyle = '#7f1d1d';
-        ctx.strokeStyle = '#f97316';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(-75, 4);
-        ctx.lineTo(-22, -56);
-        ctx.lineTo(22, -56);
-        ctx.lineTo(75, 4);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-      } else if (zone.landmarkType === 'ice_palace') {
-        // Vùng 5: Tinh thể Pha Lê Băng Cung
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
-        ctx.strokeStyle = '#e0f2fe';
-        ctx.lineWidth = 2;
-        [-32, 0, 32].forEach((ix, i) => {
-          const ih = i === 1 ? 68 : 44;
-          ctx.beginPath();
-          ctx.moveTo(ix - 12, 4);
-          ctx.lineTo(ix, -ih);
-          ctx.lineTo(ix + 12, 4);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-        });
-      } else if (zone.landmarkType === 'floating_islands') {
-        // Vùng 6: Đảo nổi Cloud-Native
-        ctx.fillStyle = '#1e3a8a';
-        ctx.strokeStyle = '#93c5fd';
-        ctx.lineWidth = 2;
-        [-55, 0, 55].forEach((fx, i) => {
-          const fy = -38 - Math.sin(elapsed * 2 + i) * 6;
-          ctx.beginPath();
-          ctx.ellipse(fx, fy, 24, 9, 0, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        });
-      } else if (zone.landmarkType === 'quantum_nexus') {
-        // Vùng 7: Khối Lập Phương Lượng Tử Zero-Day
-        ctx.rotate(elapsed * 0.8);
-        ctx.strokeStyle = '#f0abfc';
-        ctx.lineWidth = 2.2;
-        ctx.strokeRect(-28, -52, 56, 56);
-      }
-      ctx.restore();
-
-      // 7) Vòng Đại Pháp Trận giữa sân theo màu Vùng Đất
-      ctx.save();
-      ctx.translate(W * 0.5, H * 0.58);
-      ctx.scale(1, 0.42);
-      ctx.rotate(elapsed * 0.25);
-      ctx.strokeStyle = zone.uiPrimary;
-      ctx.globalAlpha = 0.42;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, Math.min(W, H) * 0.32, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-      ctx.globalAlpha = 1;
-
-      // 8) CỔNG DỊCH CHUYỂN KHÔNG GIAN TRÁI & PHẢI (Bay vào là sang Vùng Đất Mới!)
-      const prevZone = WORLD_ZONES[(state.zoneIndex - 1 + WORLD_ZONES.length) % WORLD_ZONES.length];
-      const nextZone = WORLD_ZONES[(state.zoneIndex + 1) % WORLD_ZONES.length];
-      const portalY = H * 0.56;
-
-      // Cổng Tây (Trái)
-      ctx.save();
-      ctx.translate(28, portalY);
-      ctx.strokeStyle = prevZone.uiSecondary;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 14, 34, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.font = 'bold 10px "Be Vietnam Pro", sans-serif';
-      ctx.fillStyle = prevZone.uiSecondary;
-      ctx.textAlign = 'left';
-      ctx.fillText(`◀ ${prevZone.icon} Vùng ${prevZone.id + 1}`, -10, -42);
-      ctx.restore();
-
-      // Cổng Đông (Phải)
-      ctx.save();
-      ctx.translate(W - 28, portalY);
-      ctx.strokeStyle = nextZone.uiSecondary;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 14, 34, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.font = 'bold 10px "Be Vietnam Pro", sans-serif';
-      ctx.fillStyle = nextZone.uiSecondary;
-      ctx.textAlign = 'right';
-      ctx.fillText(`Vùng ${nextZone.id + 1} ${nextZone.icon} ▶`, 10, -42);
-      ctx.restore();
-
-      // 9) Hạt Thời Tiết động theo Vùng Đất (Bão cát, Tuyết rơi, Tàn lửa, Bong bóng độc...)
-      ctx.fillStyle = zone.weatherColor;
-      weatherParticles.forEach((wp) => {
-        if (zone.weatherType === 'sandstorm') {
-          wp.x += (0.22 * dt);
-          wp.y += Math.sin(elapsed + wp.phase) * 0.02 * dt;
-        } else if (zone.weatherType === 'embers' || zone.weatherType === 'toxic_bubbles') {
-          wp.y -= (0.08 * dt);
-          wp.x += Math.sin(elapsed * 2 + wp.phase) * 0.02 * dt;
-        } else if (zone.weatherType === 'snowflakes') {
-          wp.y += (0.09 * dt);
-          wp.x += Math.cos(elapsed + wp.phase) * 0.02 * dt;
-        } else {
-          wp.x += Math.cos(elapsed + wp.phase) * 0.015 * dt;
-          wp.y += Math.sin(elapsed + wp.phase) * 0.015 * dt;
-        }
-        if (wp.x > 1) wp.x -= 1;
-        if (wp.x < 0) wp.x += 1;
-        if (wp.y > 1) wp.y -= 1;
-        if (wp.y < 0) wp.y += 1;
-
-        ctx.globalAlpha = 0.45 + 0.35 * Math.sin(elapsed * 3 + wp.phase);
-        ctx.beginPath();
-        ctx.arc(wp.x * W, wp.y * H, wp.s, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.globalAlpha = 1;
-    }
-
-    // =========================================================================
-    // PHẦN 10: VẼ NHÂN VẬT THU NHỎ 0.65X + 12 BỘ SKIN + THANH HP/MP TRÊN ĐẦU
-    // =========================================================================
-    function drawPeripheralMount2D(ctx, mountType, elapsed) {
-      ctx.save();
-      switch (mountType) {
-        case 'laptop': {
-          ctx.fillStyle = '#334155';
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.roundRect(-42, 8, 84, 12, 5); ctx.fill(); ctx.stroke();
-          ctx.fillStyle = 'rgba(14, 165, 233, 0.35)';
-          ctx.strokeStyle = '#5eead4';
-          ctx.beginPath(); ctx.roundRect(-28, -18, 56, 24, 4); ctx.fill(); ctx.stroke();
-          break;
-        }
-        case 'mouse': {
-          ctx.fillStyle = '#0f172a';
-          ctx.strokeStyle = '#ec4899';
-          ctx.lineWidth = 2.2;
-          ctx.beginPath(); ctx.ellipse(0, 13, 40, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-          ctx.fillStyle = '#00f5d4';
-          ctx.beginPath(); ctx.arc(18, 11, 4, 0, Math.PI * 2); ctx.fill();
-          break;
-        }
-        case 'server': {
-          ctx.fillStyle = '#1e293b';
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.roundRect(-50, 6, 100, 14, 4); ctx.fill(); ctx.stroke();
-          for (let i = -36; i <= 36; i += 18) {
-            ctx.fillStyle = ((Math.floor(elapsed * 8) + i) % 2 === 0) ? '#4ade80' : '#facc15';
-            ctx.beginPath(); ctx.arc(i, 13, 2.5, 0, Math.PI * 2); ctx.fill();
-          }
-          break;
-        }
-        case 'keyboard': {
-          ctx.fillStyle = '#1e1b4b';
-          ctx.strokeStyle = '#a78bfa';
-          ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.roundRect(-46, 8, 92, 13, 4); ctx.fill(); ctx.stroke();
-          const cols = ['#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6'];
-          for (let k = 0; k < 5; k++) {
-            ctx.fillStyle = cols[k];
-            ctx.fillRect(-34 + k * 14, 4 + Math.sin(elapsed * 10 + k) * 2, 9, 4);
-          }
-          break;
-        }
-        case 'gpu': {
-          ctx.fillStyle = '#111827';
-          ctx.strokeStyle = '#2dd4bf';
-          ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.roundRect(-50, 5, 100, 15, 4); ctx.fill(); ctx.stroke();
-          [-28, 0, 28].forEach((fx) => {
-            ctx.save();
-            ctx.translate(fx, 12.5);
-            ctx.rotate(elapsed * 14);
-            ctx.strokeStyle = '#00f5d4';
-            ctx.lineWidth = 1.6;
-            ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2);
-            ctx.moveTo(-5, 0); ctx.lineTo(5, 0);
-            ctx.stroke();
-            ctx.restore();
-          });
-          break;
-        }
-        case 'router': {
-          ctx.strokeStyle = '#facc15';
-          ctx.lineWidth = 2;
-          [-30, -15, 0, 15, 30].forEach((ax) => {
-            ctx.beginPath(); ctx.moveTo(ax, 8); ctx.lineTo(ax * 1.1, -9); ctx.stroke();
-          });
-          ctx.fillStyle = '#0f172a';
-          ctx.strokeStyle = '#38bdf8';
-          ctx.beginPath(); ctx.roundRect(-40, 8, 80, 12, 4); ctx.fill(); ctx.stroke();
-          break;
-        }
-        default: {
-          ctx.fillStyle = '#065f46';
-          ctx.strokeStyle = '#34d399';
-          ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.roundRect(-46, 8, 92, 12, 4); ctx.fill(); ctx.stroke();
-          break;
-        }
-      }
-      ctx.restore();
-    }
-
-    function drawCultivatorByRealmTier(ctx, x, y, facing, realmTier, mountType, label, elapsed, isGhost = false, shieldActive = false, isMainHero = false) {
-      const rCfg = REALMS[Math.min(realmTier, REALMS.length - 1)];
-      const skin = isMainHero ? getCurrentSkin() : HERO_SKINS[0];
-
-      ctx.save();
-      const hoverY = Math.sin(elapsed * 4.5 + x * 0.01) * 3.5;
-      ctx.translate(x, y + hoverY);
-      ctx.scale(CHARACTER_SCALE, CHARACTER_SCALE);
-
-      if (isGhost || (isMainHero && hero.isDead)) {
-        ctx.globalAlpha = 0.38;
-      }
-
-      // 1) Pháp trận dưới chân
-      if (realmTier >= 1 || skin.id !== 'default') {
-        ctx.save();
-        ctx.scale(1, 0.36);
-        ctx.rotate(elapsed * (1.2 + realmTier * 0.25));
-        ctx.strokeStyle = skin.trim || rCfg.uiSecondary;
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.arc(0, 36, 42 + realmTier * 4, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // 2) Hiệu ứng Pháp Tướng của 12 Bộ Skin Truyền Thuyết hoặc Bậc Độ Kiếp
-      if (skin.special === 'nine_tails') {
-        for (let t = -4; t <= 4; t++) {
-          ctx.strokeStyle = '#f472b6';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.moveTo(0, -10);
-          ctx.quadraticCurveTo(t * 14, -48 + Math.sin(elapsed * 5 + t) * 8, t * 20, -24);
-          ctx.stroke();
-        }
-      } else if (skin.special === 'wukong') {
-        ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.moveTo(-26, 6);
-        ctx.lineTo(28, -56);
-        ctx.stroke();
-      } else if (rCfg.backVisual === 'six_wings' || rCfg.backVisual === 'nine_suns_wings' || skin.special === 'phoenix_wings') {
-        ctx.save();
-        ctx.translate(0, -22);
-        for (let w = 0; w < 3; w++) {
-          const flap = Math.sin(elapsed * 5 + w * 0.6) * 0.14;
-          [-1, 1].forEach((side) => {
-            ctx.save();
-            ctx.scale(side, 1);
-            ctx.rotate(-0.35 + w * 0.28 + flap);
-            ctx.fillStyle = skin.special === 'phoenix_wings' ? 'rgba(249, 115, 22, 0.78)' : 'rgba(56, 189, 248, 0.70)';
-            ctx.beginPath();
-            ctx.moveTo(6, 0);
-            ctx.quadraticCurveTo(38 + w * 6, -16, 54 + w * 8, -4);
-            ctx.quadraticCurveTo(32, 8, 6, 4);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-          });
-        }
-        ctx.restore();
-      }
-
-      ctx.save();
-      ctx.scale(facing, 1);
-      drawPeripheralMount2D(ctx, mountType, elapsed);
-
-      // Đạo bào (Nháy đỏ khi trúng đạn)
-      const isHurting = isMainHero && hero.hurtFlashTimer > 0;
-      ctx.fillStyle = isHurting ? '#ef4444' : (skin.robe || rCfg.robeOverride);
-      ctx.strokeStyle = skin.trim || rCfg.trimOverride;
-      ctx.lineWidth = 2.2;
-      ctx.beginPath();
-      ctx.moveTo(-15, 8);
-      ctx.lineTo(15, 8);
-      ctx.lineTo(11, -24);
-      ctx.lineTo(-11, -24);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // Đầu nhân vật
-      ctx.fillStyle = '#fde68a';
-      ctx.beginPath();
-      ctx.arc(0, -35, 12.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Vương miện / Mũ mão
-      ctx.fillStyle = skin.trim || rCfg.uiSecondary;
-      ctx.beginPath();
-      ctx.moveTo(-10, -45);
-      ctx.lineTo(0, -56);
-      ctx.lineTo(10, -45);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
-      // Vòm Khiên Chắn Chiến Giáp
-      if (shieldActive && !isGhost && !(isMainHero && hero.isDead)) {
-        ctx.strokeStyle = getCurrentArmor().color;
-        ctx.lineWidth = 2.2;
-        ctx.globalAlpha = 0.55;
-        ctx.beginPath();
-        ctx.arc(0, -16, 44, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-
-      // Thanh HP + Khiên + MP trực quan ngay trên đầu Nhân Vật Chính
-      if (isMainHero) {
-        const barW = 68;
-        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
-        ctx.fillRect(-barW / 2, -78, barW, 11);
-
-        const hpRatio = Math.max(0, Math.min(1, hero.hp / Math.max(1, hero.maxHp)));
-        ctx.fillStyle = '#f43f5e';
-        ctx.fillRect(-barW / 2 + 1, -77, (barW - 2) * hpRatio, 4.5);
-
-        const shRatio = Math.max(0, Math.min(1, hero.shield / Math.max(1, hero.maxShield)));
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(-barW / 2 + 1, -77, (barW - 2) * shRatio, 2);
-
-        const mpRatio = Math.max(0, Math.min(1, hero.mp / Math.max(1, hero.maxMp)));
-        ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(-barW / 2 + 1, -71.5, (barW - 2) * mpRatio, 3.5);
-      }
-
-      if (label && !isGhost) {
-        ctx.font = 'bold 13px "Be Vietnam Pro", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = isMainHero && hero.isDead ? '#fda4af' : (skin.trim || rCfg.uiSecondary);
-        ctx.fillText(isMainHero && hero.isDead ? `👻 ${label} (Đang hồi sinh...)` : label, 0, -84);
-      }
-      ctx.restore();
-    }
-
-    // =========================================================================
-    // PHẦN 11: QUÁI VẬT THEO VÙNG ĐẤT, BOSS, PVP & TÍNH TOÁN HP/MP/HỒI SINH THỰC TẾ
+    // 5. CHUYỂN ĐỔI 7 ĐẠI VÙNG ĐẤT & CỐT TRUYỆN 7 CHƯƠNG
     // =========================================================================
     const MONSTER_TYPES = [
       { kind: 'bug404', label: '🐞 Bug 404', color: '#ef4444', r: 12, hp: 230, atk: 32, spd: 80, shooter: true },
@@ -2057,8 +1379,8 @@
       const tpl = MONSTER_TYPES[(Math.floor(Math.random() * MONSTER_TYPES.length) + state.zoneIndex) % MONSTER_TYPES.length];
       const edge = Math.floor(Math.random() * 4);
       let sx = 0, sy = 0;
-      if (edge === 0) { sx = 50; sy = H * (0.24 + Math.random() * 0.5); }
-      else if (edge === 1) { sx = W - 50; sy = H * (0.24 + Math.random() * 0.5); }
+      if (edge === 0) { sx = 55; sy = H * (0.24 + Math.random() * 0.5); }
+      else if (edge === 1) { sx = W - 55; sy = H * (0.24 + Math.random() * 0.5); }
       else if (edge === 2) { sx = W * (0.18 + Math.random() * 0.64); sy = H * 0.18; }
       else { sx = W * (0.18 + Math.random() * 0.64); sy = H * 0.82; }
 
@@ -2079,6 +1401,12 @@
         shooter: tpl.shooter,
         shootCd: 1.4 + Math.random() * 1.6,
         reward: 15 + state.zoneIndex * 5
+      });
+    }
+
+    function updateCombatModeButtons() {
+      document.querySelectorAll('.combat-mode-btn').forEach((btn) => {
+        btn.classList.toggle('active-tab', btn.dataset.mode === combatMode);
       });
     }
 
@@ -2145,12 +1473,664 @@
       audio.playBell();
     }
 
-    function updateCombatModeButtons() {
-      document.querySelectorAll('.combat-mode-btn').forEach((btn) => {
-        btn.classList.toggle('active-tab', btn.dataset.mode === combatMode);
-      });
+    function travelToZone(targetZoneIdx, showTransitionEffect = true) {
+      const wrappedIdx = ((targetZoneIdx % WORLD_ZONES.length) + WORLD_ZONES.length) % WORLD_ZONES.length;
+      state.zoneIndex = wrappedIdx;
+      const z = getCurrentZone();
+
+      enemies.length = 0;
+      enemyBullets.length = 0;
+      redTelegraphs.length = 0;
+      swordGraves.length = 0;
+
+      if (showTransitionEffect) {
+        audio.playBell();
+        const flashEl = document.getElementById('zone-transition-flash');
+        flashEl.style.opacity = '1';
+        setTimeout(() => { flashEl.style.opacity = '0'; }, 380);
+
+        showBanner(
+          `${z.icon} VÙNG ĐẤT MỚI: ${z.name.toUpperCase()}`,
+          z.desc,
+          3000
+        );
+      }
+
+      saveState();
+      if (combatMode === 'wave') {
+        for (let i = 0; i < 5; i++) spawnWaveMonster();
+      }
     }
 
+    let activeDialogueCallback = null;
+    function openStoryDialogue(speaker, avatar, chapterTag, text, onNext = null) {
+      document.getElementById('dialogue-speaker').textContent = speaker;
+      document.getElementById('dialogue-avatar').textContent = avatar || '🧙‍♂️';
+      document.getElementById('dialogue-chapter-tag').textContent = chapterTag;
+      document.getElementById('dialogue-text').textContent = text;
+      document.getElementById('story-dialogue-modal').classList.remove('hidden');
+      activeDialogueCallback = onNext;
+    }
+
+    document.getElementById('btn-dialogue-next').addEventListener('click', () => {
+      document.getElementById('story-dialogue-modal').classList.add('hidden');
+      if (typeof activeDialogueCallback === 'function') {
+        const cb = activeDialogueCallback;
+        activeDialogueCallback = null;
+        cb();
+      }
+    });
+    document.getElementById('btn-dialogue-skip').addEventListener('click', () => {
+      document.getElementById('story-dialogue-modal').classList.add('hidden');
+      activeDialogueCallback = null;
+    });
+
+    function startCurrentStoryChapter(triggerIntroDialogue = true) {
+      const ch = getCurrentChapter();
+      if (state.zoneIndex !== ch.zoneId) {
+        travelToZone(ch.zoneId, true);
+      }
+      if (ch.targetType === 'boss') {
+        summonAncientBoss(ch.bossIndex || 0);
+      } else if (ch.targetType === 'pvp') {
+        startPvpDuel(ch.pvpIndex || 0);
+      } else {
+        combatMode = 'wave';
+        updateCombatModeButtons();
+      }
+      if (triggerIntroDialogue) {
+        openStoryDialogue(
+          ch.speaker,
+          ch.avatar,
+          `Chương ${ch.id + 1}/7 • ${WORLD_ZONES[ch.zoneId].shortName}`,
+          ch.introText
+        );
+      }
+      syncHud();
+    }
+
+    function advanceStoryProgress(eventType) {
+      const ch = getCurrentChapter();
+      if (!ch || ch.targetType !== eventType) return;
+
+      state.storyProgress = (state.storyProgress || 0) + 1;
+      if (state.storyProgress >= ch.targetCount) {
+        state.storyProgress = 0;
+        addQi(ch.rewardQi, `📖 Hoàn Thành ${ch.title}`);
+        audio.playBell();
+
+        const completedChapter = ch;
+        const hasNext = state.storyChapter < STORY_CHAPTERS.length - 1;
+        if (hasNext) state.storyChapter++;
+        saveState();
+
+        openStoryDialogue(
+          completedChapter.speaker,
+          completedChapter.avatar,
+          `Hoàn Thành Chương ${completedChapter.id + 1}/7 (+${completedChapter.rewardQi} Tu Vi)`,
+          completedChapter.completeText,
+          () => { if (hasNext) startCurrentStoryChapter(true); }
+        );
+      } else {
+        saveState();
+      }
+    }
+
+    // =========================================================================
+    // 6. VẼ BỐI CẢNH 7 ĐẠI VÙNG ĐẤT & CỔNG KHÔNG GIAN
+    // =========================================================================
+    function drawZoneEnvironment(ctx, zone, elapsed, dt) {
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
+      if (hero.tribulationTimer > 0) {
+        skyGrad.addColorStop(0, '#090414');
+        skyGrad.addColorStop(0.5, '#3b0764');
+        skyGrad.addColorStop(1, '#1e1b4b');
+      } else {
+        skyGrad.addColorStop(0, zone.skyTop);
+        skyGrad.addColorStop(0.58, zone.skyMid);
+        skyGrad.addColorStop(1, zone.skyBottom);
+      }
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = '#ffffff';
+      stars.forEach((st) => {
+        ctx.globalAlpha = 0.25 + 0.45 * Math.sin(elapsed * 2.4 + st.phase);
+        ctx.beginPath();
+        ctx.arc(st.x * W, st.y * H, st.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+
+      const cx = W * 0.78;
+      const cy = H * 0.20;
+      ctx.save();
+      if (zone.celestialType === 'jade_moon') {
+        ctx.fillStyle = 'rgba(153, 246, 228, 0.18)';
+        ctx.beginPath(); ctx.arc(cx, cy, 52, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ccfbf1';
+        ctx.beginPath(); ctx.arc(cx, cy, 32, 0, Math.PI * 2); ctx.fill();
+      } else if (zone.celestialType === 'blood_sun') {
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.24)';
+        ctx.beginPath(); ctx.arc(cx, cy, 68, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath(); ctx.arc(cx, cy, 44, 0, Math.PI * 2); ctx.fill();
+      } else if (zone.celestialType === 'crescent_purple') {
+        ctx.fillStyle = '#e879f9';
+        ctx.beginPath(); ctx.arc(cx, cy, 34, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = zone.skyTop;
+        ctx.beginPath(); ctx.arc(cx - 12, cy - 6, 30, 0, Math.PI * 2); ctx.fill();
+      } else if (zone.celestialType === 'lava_eclipse') {
+        ctx.strokeStyle = '#fb7185';
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#4c0519';
+        ctx.beginPath(); ctx.arc(cx, cy, 34, 0, Math.PI * 2); ctx.fill();
+      } else if (zone.celestialType === 'aurora') {
+        for (let a = 0; a < 3; a++) {
+          ctx.strokeStyle = a % 2 === 0 ? 'rgba(56, 189, 248, 0.35)' : 'rgba(52, 211, 153, 0.32)';
+          ctx.lineWidth = 14;
+          ctx.beginPath();
+          ctx.moveTo(W * 0.15, H * (0.14 + a * 0.05));
+          ctx.bezierCurveTo(
+            W * 0.4, H * (0.06 + Math.sin(elapsed + a) * 0.05),
+            W * 0.65, H * (0.24 - Math.cos(elapsed + a) * 0.05),
+            W * 0.88, H * (0.12 + a * 0.04)
+          );
+          ctx.stroke();
+        }
+      } else if (zone.celestialType === 'thunder_eye') {
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(cx, cy, 48, 22, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#60a5fa';
+        ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
+      } else if (zone.celestialType === 'black_hole') {
+        ctx.translate(cx, cy);
+        ctx.rotate(elapsed * 1.5);
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.ellipse(0, 0, 56, 18, 0.3, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#090114';
+        ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+
+      const horizonY = H * 0.42;
+      ctx.fillStyle = zone.mountainColor;
+      ctx.strokeStyle = zone.mountainHighlight;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      [0.12, 0.26, 0.42, 0.58, 0.74, 0.88, 1.0].forEach((px, idx) => {
+        const peakH = (idx % 2 === 0 ? 55 : 32) + Math.sin(idx * 1.7 + state.zoneIndex) * 14;
+        ctx.lineTo(W * (px - 0.07), horizonY - peakH);
+        ctx.lineTo(W * px, horizonY);
+      });
+      ctx.lineTo(W, H);
+      ctx.lineTo(0, H);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = zone.groundColor;
+      ctx.fillRect(0, horizonY, W, H - horizonY);
+
+      ctx.strokeStyle = zone.gridColor;
+      ctx.lineWidth = 1;
+      for (let gy = horizonY; gy < H; gy += 38) {
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+      }
+      for (let gx = 0; gx <= W; gx += 68) {
+        ctx.beginPath(); ctx.moveTo(gx, horizonY); ctx.lineTo((gx - W * 0.5) * 1.45 + W * 0.5, H); ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(W * 0.5, horizonY - 4);
+      if (zone.landmarkType === 'server_pagoda') {
+        ctx.fillStyle = '#0f766e';
+        ctx.strokeStyle = '#5eead4';
+        ctx.lineWidth = 2;
+        [-28, 0, 28].forEach((tx, idx) => {
+          const h = idx === 1 ? 58 : 40;
+          ctx.fillRect(tx - 10, -h, 20, h);
+          ctx.strokeRect(tx - 10, -h, 20, h);
+        });
+      } else if (zone.landmarkType === 'legacy_pyramid') {
+        ctx.fillStyle = '#9a3412';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-65, 4); ctx.lineTo(0, -64); ctx.lineTo(65, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (zone.landmarkType === 'spider_swamp') {
+        ctx.strokeStyle = 'rgba(163, 230, 53, 0.55)';
+        ctx.lineWidth = 1.6;
+        for (let r = 16; r <= 56; r += 14) { ctx.beginPath(); ctx.arc(0, -24, r, 0, Math.PI * 2); ctx.stroke(); }
+      } else if (zone.landmarkType === 'volcano_gpu') {
+        ctx.fillStyle = '#7f1d1d';
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(-75, 4); ctx.lineTo(-22, -56); ctx.lineTo(22, -56); ctx.lineTo(75, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (zone.landmarkType === 'ice_palace') {
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.strokeStyle = '#e0f2fe';
+        ctx.lineWidth = 2;
+        [-32, 0, 32].forEach((ix, i) => {
+          const ih = i === 1 ? 68 : 44;
+          ctx.beginPath(); ctx.moveTo(ix - 12, 4); ctx.lineTo(ix, -ih); ctx.lineTo(ix + 12, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+        });
+      } else if (zone.landmarkType === 'floating_islands') {
+        ctx.fillStyle = '#1e3a8a';
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2;
+        [-55, 0, 55].forEach((fx, i) => {
+          const fy = -38 - Math.sin(elapsed * 2 + i) * 6;
+          ctx.beginPath(); ctx.ellipse(fx, fy, 24, 9, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        });
+      } else if (zone.landmarkType === 'quantum_nexus') {
+        ctx.rotate(elapsed * 0.8);
+        ctx.strokeStyle = '#f0abfc';
+        ctx.lineWidth = 2.2;
+        ctx.strokeRect(-28, -52, 56, 56);
+      }
+      ctx.restore();
+
+      // Vòng Đại Pháp Trận giữa sân
+      ctx.save();
+      ctx.translate(W * 0.5, H * 0.58);
+      ctx.scale(1, 0.42);
+      ctx.rotate(elapsed * 0.25);
+      ctx.strokeStyle = zone.uiPrimary;
+      ctx.globalAlpha = 0.42;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.min(W, H) * 0.32, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      ctx.globalAlpha = 1;
+
+      // Cổng Dịch Chuyển Không Gian Trái & Phải
+      const prevZone = WORLD_ZONES[(state.zoneIndex - 1 + WORLD_ZONES.length) % WORLD_ZONES.length];
+      const nextZone = WORLD_ZONES[(state.zoneIndex + 1) % WORLD_ZONES.length];
+      const portalY = H * 0.56;
+
+      ctx.save();
+      ctx.translate(28, portalY);
+      ctx.strokeStyle = prevZone.uiSecondary;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(0, 0, 14, 34, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.font = 'bold 10px "Be Vietnam Pro", sans-serif';
+      ctx.fillStyle = prevZone.uiSecondary;
+      ctx.textAlign = 'left';
+      ctx.fillText(`◀ ${prevZone.icon} Vùng ${prevZone.id + 1}`, -10, -42);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(W - 28, portalY);
+      ctx.strokeStyle = nextZone.uiSecondary;
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(0, 0, 14, 34, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.font = 'bold 10px "Be Vietnam Pro", sans-serif';
+      ctx.fillStyle = nextZone.uiSecondary;
+      ctx.textAlign = 'right';
+      ctx.fillText(`Vùng ${nextZone.id + 1} ${nextZone.icon} ▶`, 10, -42);
+      ctx.restore();
+
+      // Hạt Thời Tiết Động
+      ctx.fillStyle = zone.weatherColor;
+      weatherParticles.forEach((wp) => {
+        if (zone.weatherType === 'sandstorm') {
+          wp.x += 0.22 * dt;
+          wp.y += Math.sin(elapsed + wp.phase) * 0.02 * dt;
+        } else if (zone.weatherType === 'embers' || zone.weatherType === 'toxic_bubbles') {
+          wp.y -= 0.08 * dt;
+          wp.x += Math.sin(elapsed * 2 + wp.phase) * 0.02 * dt;
+        } else if (zone.weatherType === 'snowflakes') {
+          wp.y += 0.09 * dt;
+          wp.x += Math.cos(elapsed + wp.phase) * 0.02 * dt;
+        } else {
+          wp.x += Math.cos(elapsed + wp.phase) * 0.015 * dt;
+          wp.y += Math.sin(elapsed + wp.phase) * 0.015 * dt;
+        }
+        if (wp.x > 1) wp.x -= 1;
+        if (wp.x < 0) wp.x += 1;
+        if (wp.y > 1) wp.y -= 1;
+        if (wp.y < 0) wp.y += 1;
+
+        ctx.globalAlpha = 0.45 + 0.35 * Math.sin(elapsed * 3 + wp.phase);
+        ctx.beginPath();
+        ctx.arc(wp.x * W, wp.y * H, wp.s, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // =========================================================================
+    // 7. VẼ PHÁP BẢO NGOẠI VI, NHÂN VẬT & HIỆU ỨNG CHIÊU THỨC TIÊN HIỆP
+    // =========================================================================
+    function drawPeripheralMount2D(ctx, mountType, elapsed) {
+      ctx.save();
+      switch (mountType) {
+        case 'laptop': {
+          ctx.fillStyle = '#334155';
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          drawRoundRect(ctx, -42, 8, 84, 12, 5); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = 'rgba(14, 165, 233, 0.35)';
+          ctx.strokeStyle = '#5eead4';
+          drawRoundRect(ctx, -28, -18, 56, 24, 4); ctx.fill(); ctx.stroke();
+          break;
+        }
+        case 'mouse': {
+          ctx.fillStyle = '#0f172a';
+          ctx.strokeStyle = '#ec4899';
+          ctx.lineWidth = 2.2;
+          ctx.beginPath(); ctx.ellipse(0, 13, 40, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#00f5d4';
+          ctx.beginPath(); ctx.arc(18, 11, 4, 0, Math.PI * 2); ctx.fill();
+          break;
+        }
+        case 'server': {
+          ctx.fillStyle = '#1e293b';
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          drawRoundRect(ctx, -50, 6, 100, 14, 4); ctx.fill(); ctx.stroke();
+          for (let i = -36; i <= 36; i += 18) {
+            ctx.fillStyle = ((Math.floor(elapsed * 8) + i) % 2 === 0) ? '#4ade80' : '#facc15';
+            ctx.beginPath(); ctx.arc(i, 13, 2.5, 0, Math.PI * 2); ctx.fill();
+          }
+          break;
+        }
+        case 'keyboard': {
+          ctx.fillStyle = '#1e1b4b';
+          ctx.strokeStyle = '#a78bfa';
+          ctx.lineWidth = 2;
+          drawRoundRect(ctx, -46, 8, 92, 13, 4); ctx.fill(); ctx.stroke();
+          const cols = ['#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6'];
+          for (let k = 0; k < 5; k++) {
+            ctx.fillStyle = cols[k];
+            ctx.fillRect(-34 + k * 14, 4 + Math.sin(elapsed * 10 + k) * 2, 9, 4);
+          }
+          break;
+        }
+        case 'gpu': {
+          ctx.fillStyle = '#111827';
+          ctx.strokeStyle = '#2dd4bf';
+          ctx.lineWidth = 2;
+          drawRoundRect(ctx, -50, 5, 100, 15, 4); ctx.fill(); ctx.stroke();
+          [-28, 0, 28].forEach((fx) => {
+            ctx.save();
+            ctx.translate(fx, 12.5);
+            ctx.rotate(elapsed * 14);
+            ctx.strokeStyle = '#00f5d4';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2);
+            ctx.moveTo(-5, 0); ctx.lineTo(5, 0);
+            ctx.stroke();
+            ctx.restore();
+          });
+          break;
+        }
+        case 'router': {
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 2;
+          [-30, -15, 0, 15, 30].forEach((ax) => {
+            ctx.beginPath(); ctx.moveTo(ax, 8); ctx.lineTo(ax * 1.1, -9); ctx.stroke();
+          });
+          ctx.fillStyle = '#0f172a';
+          ctx.strokeStyle = '#38bdf8';
+          drawRoundRect(ctx, -40, 8, 80, 12, 4); ctx.fill(); ctx.stroke();
+          break;
+        }
+        default: {
+          ctx.fillStyle = '#065f46';
+          ctx.strokeStyle = '#34d399';
+          ctx.lineWidth = 2;
+          drawRoundRect(ctx, -46, 8, 92, 12, 4); ctx.fill(); ctx.stroke();
+          break;
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawCultivatorByRealmTier(ctx, x, y, facing, realmTier, mountType, label, elapsed, isGhost = false, shieldActive = false, isMainHero = false) {
+      const rCfg = REALMS[Math.min(realmTier, REALMS.length - 1)];
+      const skin = isMainHero ? getCurrentSkin() : HERO_SKINS[0];
+
+      ctx.save();
+      const hoverY = Math.sin(elapsed * 4.5 + x * 0.01) * 3.5;
+      ctx.translate(x, y + hoverY);
+      ctx.scale(CHARACTER_SCALE, CHARACTER_SCALE);
+
+      if (isGhost || (isMainHero && hero.isDead)) {
+        ctx.globalAlpha = 0.38;
+      }
+
+      // 0) PHÁP TƯỚNG THIÊN ĐỊA HOÀNG KIM (Khi bật đại chiêu [R])
+      if (isMainHero && hero.dharmaAvatarTimer > 0) {
+        ctx.save();
+        ctx.globalAlpha = 0.46 + 0.15 * Math.sin(elapsed * 8);
+        ctx.strokeStyle = '#fde047';
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.22)';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(0, -78, 56, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-45, 5);
+        ctx.lineTo(45, 5);
+        ctx.lineTo(32, -88);
+        ctx.lineTo(-32, -88);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = 'bold 28px serif';
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.fillText('卍', 0, -52);
+        ctx.restore();
+      }
+
+      // 0.5) THIÊN CƯƠNG KIẾM TRẬN SAU LƯNG (Khi bật [1] Vạn Kiếm Quy Tông)
+      if (isMainHero && hero.swordArrayTimer > 0) {
+        ctx.save();
+        ctx.translate(0, -32);
+        for (let s = 0; s < 8; s++) {
+          const sa = elapsed * 5 + (s * Math.PI * 2) / 8;
+          ctx.save();
+          ctx.rotate(sa);
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.moveTo(28, 0);
+          ctx.lineTo(58, 0);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      // 1) Pháp trận dưới chân
+      if (realmTier >= 1 || skin.id !== 'default') {
+        ctx.save();
+        ctx.scale(1, 0.36);
+        ctx.rotate(elapsed * (1.2 + realmTier * 0.25));
+        ctx.strokeStyle = skin.trim || rCfg.uiSecondary;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(0, 36, 42 + realmTier * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 2) Hiệu ứng Pháp Tướng của 12 Skin & 7 Bậc Độ Kiếp
+      if (skin.special === 'nine_tails') {
+        for (let t = -4; t <= 4; t++) {
+          ctx.strokeStyle = '#f472b6';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(0, -10);
+          ctx.quadraticCurveTo(t * 14, -48 + Math.sin(elapsed * 5 + t) * 8, t * 20, -24);
+          ctx.stroke();
+        }
+      } else if (skin.special === 'wukong') {
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(-26, 6);
+        ctx.lineTo(28, -56);
+        ctx.stroke();
+      } else if (rCfg.backVisual === 'three_pills') {
+        for (let p = 0; p < 3; p++) {
+          const pa = elapsed * 3 + (p * Math.PI * 2) / 3;
+          ctx.fillStyle = '#fde047';
+          ctx.beginPath();
+          ctx.arc(Math.cos(pa) * 32, -26 + Math.sin(pa) * 14, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (rCfg.backVisual === 'nascent_soul') {
+        ctx.fillStyle = '#e879f9';
+        ctx.beginPath();
+        ctx.arc(28, -42 + Math.sin(elapsed * 5) * 5, 8, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (rCfg.backVisual === 'fire_halo') {
+        ctx.strokeStyle = '#f43f5e';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(0, -28, 36, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (rCfg.backVisual === 'six_wings' || rCfg.backVisual === 'nine_suns_wings' || skin.special === 'phoenix_wings') {
+        ctx.save();
+        ctx.translate(0, -22);
+        for (let w = 0; w < 3; w++) {
+          const flap = Math.sin(elapsed * 5 + w * 0.6) * 0.14;
+          [-1, 1].forEach((side) => {
+            ctx.save();
+            ctx.scale(side, 1);
+            ctx.rotate(-0.35 + w * 0.28 + flap);
+            ctx.fillStyle = skin.special === 'phoenix_wings' ? 'rgba(249, 115, 22, 0.78)' : 'rgba(56, 189, 248, 0.70)';
+            ctx.beginPath();
+            ctx.moveTo(6, 0);
+            ctx.quadraticCurveTo(38 + w * 6, -16, 54 + w * 8, -4);
+            ctx.quadraticCurveTo(32, 8, 6, 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          });
+        }
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.scale(facing, 1);
+      drawPeripheralMount2D(ctx, mountType, elapsed);
+
+      const isHurting = isMainHero && hero.hurtFlashTimer > 0;
+      ctx.fillStyle = isHurting ? '#ef4444' : (skin.robe || rCfg.robeOverride);
+      ctx.strokeStyle = skin.trim || rCfg.trimOverride;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-15, 8);
+      ctx.lineTo(15, 8);
+      ctx.lineTo(11, -24);
+      ctx.lineTo(-11, -24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde68a';
+      ctx.beginPath();
+      ctx.arc(0, -35, 12.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = skin.trim || rCfg.uiSecondary;
+      ctx.beginPath();
+      ctx.moveTo(-10, -45);
+      ctx.lineTo(0, -56);
+      ctx.lineTo(10, -45);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      if (shieldActive && !isGhost && !(isMainHero && hero.isDead)) {
+        ctx.strokeStyle = getCurrentArmor().color;
+        ctx.lineWidth = 2.2;
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.arc(0, -16, 44, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      if (isMainHero) {
+        const barW = 68;
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.85)';
+        ctx.fillRect(-barW / 2, -78, barW, 11);
+
+        const hpRatio = Math.max(0, Math.min(1, hero.hp / Math.max(1, hero.maxHp)));
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillRect(-barW / 2 + 1, -77, (barW - 2) * hpRatio, 4.5);
+
+        const shRatio = Math.max(0, Math.min(1, hero.shield / Math.max(1, hero.maxShield)));
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(-barW / 2 + 1, -77, (barW - 2) * shRatio, 2);
+
+        const mpRatio = Math.max(0, Math.min(1, hero.mp / Math.max(1, hero.maxMp)));
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(-barW / 2 + 1, -71.5, (barW - 2) * mpRatio, 3.5);
+      }
+
+      if (label && !isGhost) {
+        ctx.font = 'bold 13px "Be Vietnam Pro", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = isMainHero && hero.isDead ? '#fda4af' : (skin.trim || rCfg.uiSecondary);
+        ctx.fillText(isMainHero && hero.isDead ? `👻 ${label} (Đang hồi sinh...)` : label, 0, -84);
+      }
+      ctx.restore();
+    }
+
+    // Vẽ đòn đánh Tiên Hiệp: Bán Nguyệt Kiếm Khí, Phi Kiếm Linh Quang & Linh Phù Chu Sa
+    function drawXianxiaProjectile(ctx, b, elapsed) {
+      const ang = Math.atan2(b.vy, b.vx);
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(ang);
+
+      if (b.style === 'crescent') {
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, b.r * 2.2, -Math.PI * 0.42, Math.PI * 0.42, false);
+        ctx.arc(-4, 0, b.r * 1.7, Math.PI * 0.35, -Math.PI * 0.35, true);
+        ctx.closePath();
+        ctx.fill();
+      } else if (b.style === 'talisman') {
+        ctx.rotate(elapsed * 10);
+        ctx.fillStyle = '#facc15';
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(-7, -4.5, 14, 9);
+        ctx.strokeRect(-7, -4.5, 14, 9);
+      } else {
+        // Phi Kiếm Linh Quang
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.moveTo(b.r * 2.8, 0);
+        ctx.lineTo(-b.r * 1.2, -b.r * 0.65);
+        ctx.lineTo(-b.r * 1.2, b.r * 0.65);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-b.r * 1.2, -b.r * 1.3);
+        ctx.lineTo(-b.r * 1.2, b.r * 1.3);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 8. SÁT THƯƠNG, TRÚNG ĐẠN, HỒI SINH 5.0 GIÂY & 7 ĐẠI CHIÊU THỨC TIÊN HIỆP
+    // =========================================================================
     function getBaseDamage() {
       const cls = getCurrentClass();
       const skin = getCurrentSkin();
@@ -2201,7 +2181,6 @@
           color: e.isBoss || e.isPvp ? '#fde047' : '#2dd4bf'
         });
 
-        // Cập nhật tiến độ Cốt Truyện Chính Tuyến
         if (e.isBoss) {
           advanceStoryProgress('boss');
           addQi(e.reward, '👹 Diệt Boss');
@@ -2215,20 +2194,17 @@
       syncHud();
     }
 
-    // Trừ HP & Khiên Giáp thực tế khi trúng đạn hoặc va chạm quái + Kích hoạt 5.0s Hồi Sinh khi HP <= 0
     function applyDamageToHero(rawEnemyDmg, attackerEntity = null) {
       if (hero.isDead || hero.dashTimer > 0 || hero.baguaTimer > 0) return;
 
       const armor = getCurrentArmor();
       const reduced = Math.max(8, Math.round(rawEnemyDmg * (1 - armor.def)));
 
-      // Phản đòn từ Chiến Giáp
       if (attackerEntity && armor.thorns > 0) {
         const reflectDmg = Math.round(rawEnemyDmg * armor.thorns * getCurrentRealm().mult);
         dealDamageToEnemy(attackerEntity, reflectDmg, false);
       }
 
-      // Trừ vào Khiên Giáp trước, phần dư trừ thẳng vào HP
       if (hero.shield >= reduced) {
         hero.shield -= reduced;
         spawnDamageText(hero.x, hero.y - 26, `🛡️-${reduced}`, '#38bdf8', 11);
@@ -2247,7 +2223,6 @@
       clearTimeout(applyDamageToHero._vt);
       applyDamageToHero._vt = setTimeout(() => { vig.style.opacity = '0'; }, 160);
 
-      // Nếu HP về 0 -> Bật chế độ Trọng Thương 502 Bad Gateway & Đếm ngược 5.0 giây Hồi Sinh
       if (hero.hp <= 0) {
         hero.isDead = true;
         hero.respawnTimer = 5.0;
@@ -2264,7 +2239,7 @@
       hero.hp = hero.maxHp;
       hero.shield = hero.maxShield;
       hero.mp = hero.maxMp;
-      hero.baguaTimer = 2.5; // Miễn thương 2.5 giây sau khi hồi sinh
+      hero.baguaTimer = 2.5;
       enemyBullets.length = 0;
       document.getElementById('respawn-overlay').classList.add('hidden');
       audio.playBell();
@@ -2274,9 +2249,6 @@
 
     document.getElementById('btn-instant-revive').addEventListener('click', reviveHeroNow);
 
-    // =========================================================================
-    // PHẦN 12: ĐỘ KIẾP & 6 TUYỆT KỸ TIÊU HAO MANA (MP) THỰC TẾ
-    // =========================================================================
     function triggerBreakthroughToRealm(targetTierIndex) {
       const clamped = Math.max(0, Math.min(REALMS.length - 1, targetTierIndex));
       state.realmIndex = clamped;
@@ -2302,6 +2274,7 @@
       renderRealmsPreviewModal();
     }
 
+    // Thi triển 7 Đại Chiêu Thức Tiên Hiệp Chân Truyền ([1]-[6] & [R])
     function castCombatSkill(slotIdx) {
       if (hero.isDead) return;
       const sk = SKILLS[slotIdx];
@@ -2318,59 +2291,135 @@
       const baseDmg = getBaseDamage();
       const skin = getCurrentSkin();
 
+      showXianxiaCutin(sk.name, sk.poem);
+      groundMandalas.push({
+        x: hero.x,
+        y: hero.y + 14,
+        r: 20,
+        maxR: 120,
+        color: skin.bullet || getCurrentZone().uiSecondary,
+        life: 0.9,
+        maxLife: 0.9
+      });
+
       switch (slotIdx) {
         case 0: {
+          // [1] VẠN KIẾM QUY TÔNG & KIẾM MỘ
           audio.playSkillCast();
-          for (let i = 0; i < 24; i++) {
+          hero.swordArrayTimer = 4.0;
+          for (let i = 0; i < 28; i++) {
             const target = enemies[i % Math.max(1, enemies.length)];
-            const tx = target ? target.x + (Math.random() - 0.5) * 40 : W * (0.15 + Math.random() * 0.7);
-            const ty = target ? target.y + (Math.random() - 0.5) * 40 : H * (0.2 + Math.random() * 0.5);
-            const sx = hero.x + (Math.random() - 0.5) * 200;
-            const sy = -20 - Math.random() * 80;
+            const tx = target ? target.x + (Math.random() - 0.5) * 45 : W * (0.15 + Math.random() * 0.7);
+            const ty = target ? target.y + (Math.random() - 0.5) * 45 : H * (0.25 + Math.random() * 0.5);
+            const sx = hero.x + (Math.random() - 0.5) * 240;
+            const sy = -30 - Math.random() * 90;
             const ang = Math.atan2(ty - sy, tx - sx);
-            heroBullets.push({ x: sx, y: sy, vx: Math.cos(ang) * 650, vy: Math.sin(ang) * 650, dmg: baseDmg * 1.4, color: skin.bullet || '#fde047', r: 4.5, pierce: 3, life: 1.5 });
+            heroBullets.push({
+              x: sx,
+              y: sy,
+              vx: Math.cos(ang) * 700,
+              vy: Math.sin(ang) * 700,
+              dmg: baseDmg * 1.45,
+              color: skin.bullet || '#fde047',
+              r: 5.5,
+              pierce: 3,
+              style: 'sword',
+              leaveGrave: i % 3 === 0,
+              life: 1.4
+            });
           }
           break;
         }
         case 1: {
+          // [2] CỬU THIÊN THẦN LÔI — NGŨ LÔI CHÍNH PHÁP
           audio.playThunder();
+          document.body.classList.remove('screen-shake');
+          void document.body.offsetWidth;
+          document.body.classList.add('screen-shake');
           const targets = enemies.length > 0 ? [...enemies] : [];
-          for (let i = 0; i < 10; i++) {
+          let prevPt = null;
+          for (let i = 0; i < 12; i++) {
             const t = targets[i % Math.max(1, targets.length)];
             const lx = t ? t.x : W * (0.2 + Math.random() * 0.6);
             const ly = t ? t.y : H * (0.25 + Math.random() * 0.5);
             const pts = [{ x: lx + (Math.random() - 0.5) * 50, y: 0 }];
             for (let seg = 1; seg <= 5; seg++) pts.push({ x: lx + (Math.random() - 0.5) * 35, y: (ly / 5) * seg });
-            lightningBolts.push({ pts, color: '#38bdf8', life: 0.25 });
-            if (t) dealDamageToEnemy(t, baseDmg * 2.3, true);
+            lightningBolts.push({ pts, color: '#38bdf8', life: 0.3 });
+            if (prevPt) {
+              lightningBolts.push({ pts: [prevPt, { x: lx, y: ly }], color: '#fde047', life: 0.28 });
+            }
+            prevPt = { x: lx, y: ly };
+            if (t) dealDamageToEnemy(t, baseDmg * 2.4, true);
           }
           break;
         }
         case 2: {
+          // [3] THÁI CỰC BÁT QUÁI TRẬN & 8 ĐÓA KIM LIÊN
           audio.playBell();
-          hero.baguaTimer = 5.0;
+          hero.baguaTimer = 5.5;
           hero.hp = Math.min(hero.maxHp, hero.hp + hero.maxHp * 0.35);
           hero.shield = hero.maxShield;
           enemyBullets.length = 0;
-          spawnDamageText(hero.x, hero.y - 38, '☯️ BÁT QUÁI HỘ THỂ +35% HP!', '#34d399', 12);
+          goldenLotuses.length = 0;
+          for (let l = 0; l < 8; l++) {
+            goldenLotuses.push({ angle: (l * Math.PI * 2) / 8, life: 5.5, dmg: baseDmg * 0.8 });
+          }
+          spawnDamageText(hero.x, hero.y - 38, '☯️ THÁI CỰC KIM LIÊN +35% HP!', '#fde047', 12);
           break;
         }
         case 3: {
+          // [4] BĂNG HỎA LƯỠNG NGHI CHÂN LONG (18 ĐỐT)
           audio.playSkillCast();
           dragons.push(
-            { x: -40, y: hero.y - 22, vx: 460, color: '#f97316', phase: 0, dmg: baseDmg * 2.1 },
-            { x: -40, y: hero.y + 22, vx: 460, color: '#06b6d4', phase: Math.PI, dmg: baseDmg * 2.1 }
+            { x: -50, y: hero.y - 26, vx: 470, color: '#f97316', headColor: '#fde047', phase: 0, dmg: baseDmg * 2.3 },
+            { x: -50, y: hero.y + 26, vx: 470, color: '#38bdf8', headColor: '#e0f2fe', phase: Math.PI, dmg: baseDmg * 2.3 }
           );
           break;
         }
         case 4: {
+          // [5] NHẤT KHÍ HÓA TAM THANH & TIA TIÊN QUANG
           audio.playSkillCast();
-          hero.cloneTimer = 8.0;
+          hero.cloneTimer = 8.5;
+          for (let b = 0; b < 3; b++) {
+            const target = enemies[b % Math.max(1, enemies.length)];
+            const ang = target ? Math.atan2(target.y - hero.y, target.x - hero.x) : -0.3 + b * 0.3;
+            immortalBeams.push({
+              x: hero.x,
+              y: hero.y - 12,
+              angle: ang,
+              color: b === 0 ? '#fde047' : b === 1 ? '#38bdf8' : '#e879f9',
+              life: 0.45
+            });
+          }
+          enemies.forEach((e) => dealDamageToEnemy(e, baseDmg * 2.0, true));
           break;
         }
         case 5: {
+          // [6] LỤC ĐẠO LUÂN HỒI BÀN & VẾT NỨT KHÔNG GIAN
           audio.playThunder();
-          blackHoles.push({ x: W * 0.5, y: H * 0.44, r: 52, life: 3.2, tickTimer: 0, dmg: baseDmg * 1.6 });
+          blackHoles.push({ x: W * 0.5, y: H * 0.44, r: 64, life: 3.6, tickTimer: 0, dmg: baseDmg * 1.8 });
+          break;
+        }
+        case 6: {
+          // [Phím R] PHÁP TƯỚNG THIÊN ĐỊA — TIÊN ĐẾ TRẤN THIÊN CHƯỞNG
+          audio.playThunder();
+          audio.playBell();
+          hero.dharmaAvatarTimer = 5.0;
+          document.body.classList.remove('screen-shake');
+          void document.body.offsetWidth;
+          document.body.classList.add('screen-shake');
+
+          const target = enemies.find((e) => e.isBoss || e.isPvp) || enemies[0];
+          const px = target ? target.x : W * 0.5;
+          const py = target ? target.y : H * 0.42;
+          heavenlyPalms.push({
+            x: px,
+            y: py,
+            curY: -140,
+            life: 1.5,
+            impacted: false,
+            dmg: baseDmg * 4.5
+          });
           break;
         }
       }
@@ -2391,15 +2440,12 @@
       hero.y = Math.max(H * 0.16, Math.min(H * 0.84, hero.y + Math.sin(angle) * 125));
       hero.targetX = hero.x;
       hero.targetY = hero.y;
-      spawnDamageText(hero.x, hero.y - 30, '💨 TỐC BIẾN (-15 MP)!', '#5eead4', 11);
+      spawnDamageText(hero.x, hero.y - 30, '💨 SÚC ĐỊA THÀNH THỐN (-15 MP)!', '#5eead4', 11);
       syncHud();
     }
 
     function useHealPotion() {
-      if (hero.isDead) {
-        reviveHeroNow();
-        return;
-      }
+      if (hero.isDead) { reviveHeroNow(); return; }
       audio.playBell();
       hero.hp = Math.min(hero.maxHp, hero.hp + Math.round(hero.maxHp * 0.45));
       hero.shield = hero.maxShield;
@@ -2415,17 +2461,15 @@
       syncHud();
     }
 
-    document.getElementById('btn-potion-heal').addEventListener('click', useHealPotion);
-    document.getElementById('btn-potion-mana').addEventListener('click', useManaPotion);
-
     // =========================================================================
-    // PHẦN 13: ĐIỀU KHIỂN BÀN PHÍM & FLOATING TOUCH JOYSTICK TRÊN MOBILE
+    // 9. ĐIỀU KHIỂN BÀN PHÍM & CẢM ỨNG (FLOATING JOYSTICK)
     // =========================================================================
     const keys = {};
     window.addEventListener('keydown', (e) => {
       keys[e.code] = true;
       if (!document.getElementById('welcome-modal').classList.contains('hidden')) return;
       if (e.key >= '1' && e.key <= '6') castCombatSkill(Number(e.key) - 1);
+      else if (e.code === 'KeyR') castCombatSkill(6);
       else if (e.code === 'Space') { e.preventDefault(); triggerHeroDash(); }
       else if (e.code === 'KeyQ') useHealPotion();
       else if (e.code === 'KeyE') useManaPotion();
@@ -2437,7 +2481,6 @@
       const px = e.clientX - rect.left;
       const py = e.clientY - rect.top;
 
-      // Chạm trực tiếp vào Cổng Dịch Chuyển Trái / Phải trên màn hình để sang Vùng Đất Mới
       if (Math.hypot(px - 28, py - H * 0.56) < 42) {
         travelToZone(state.zoneIndex - 1, true);
         return;
@@ -2516,7 +2559,7 @@
     }
 
     // =========================================================================
-    // PHẦN 14: VÒNG LẶP GAME 60FPS TRÊN CANVAS
+    // 10. VÒNG LẶP CHIẾN TRƯỜNG 60FPS TRÊN CANVAS
     // =========================================================================
     let lastTime = performance.now();
     let spawnTimer = 0;
@@ -2532,18 +2575,15 @@
       const skin = getCurrentSkin();
       const zone = getCurrentZone();
 
-      // 1) Vẽ toàn bộ Bối Cảnh, Bầu Trời, Địa Hình, Cổng Không Gian & Thời Tiết của Vùng Đất hiện tại
+      // 1) Vẽ Bầu trời, Thiên tượng, Địa hình, Cổng Không Gian & Thời tiết theo Vùng Đất
       drawZoneEnvironment(ctx, zone, elapsed, dt);
 
-      // 2) Nếu nhân vật đang Trọng Thương (HP <= 0), đếm ngược 5.0 giây để Hồi Sinh
+      // 2) Đếm ngược 5.0s Hồi Sinh nếu HP <= 0
       if (hero.isDead) {
         hero.respawnTimer = Math.max(0, hero.respawnTimer - dt);
         document.getElementById('respawn-timer-num').textContent = `${hero.respawnTimer.toFixed(1)}s`;
-        if (hero.respawnTimer <= 0) {
-          reviveHeroNow();
-        }
+        if (hero.respawnTimer <= 0) reviveHeroNow();
       } else {
-        // Tự động hồi nhẹ MP, Khiên Giáp & HP (nếu mặc Skin Phượng Hoàng hoặc Cầm Sư Frontend)
         hero.mp = Math.min(hero.maxMp, hero.mp + hero.maxMp * 0.045 * dt);
         hero.shield = Math.min(hero.maxShield, hero.shield + hero.maxShield * 0.05 * dt);
         if (skin.special === 'phoenix_wings' || state.classId === 'frontend') {
@@ -2553,8 +2593,10 @@
 
       if (hero.hurtFlashTimer > 0) hero.hurtFlashTimer = Math.max(0, hero.hurtFlashTimer - dt);
       if (hero.portalCooldown > 0) hero.portalCooldown = Math.max(0, hero.portalCooldown - dt);
+      if (hero.swordArrayTimer > 0) hero.swordArrayTimer = Math.max(0, hero.swordArrayTimer - dt);
+      if (hero.dharmaAvatarTimer > 0) hero.dharmaAvatarTimer = Math.max(0, hero.dharmaAvatarTimer - dt);
 
-      // 3) Cooldown Kỹ năng
+      // 3) Cooldown 7 Kỹ năng
       SKILLS.forEach((sk, idx) => {
         if (sk.timer > 0) sk.timer = Math.max(0, sk.timer - dt);
         const overlay = document.getElementById(`cd-overlay-${idx}`);
@@ -2564,7 +2606,7 @@
         }
       });
 
-      // 4) Di chuyển Nhân vật (Bàn phím / Floating Touch Joystick / AI Tự đánh)
+      // 4) Di chuyển nhân vật & Tự động xuất chiêu
       if (!hero.isDead) {
         let kdx = 0, kdy = 0;
         if (keys['KeyA'] || keys['ArrowLeft']) kdx -= 1;
@@ -2583,10 +2625,9 @@
           hero.targetX = W * 0.5 + Math.cos(hero.patrolAngle) * (W * 0.25);
           hero.targetY = H * 0.56 + Math.sin(hero.patrolAngle * 2) * (H * 0.13);
 
-          // Tự động dùng kỹ năng nếu còn trên 40% MP
-          if (enemies.length > 0 && hero.mp > hero.maxMp * 0.4) {
+          if (enemies.length > 0 && hero.mp > hero.maxMp * 0.42) {
             for (let sIdx = 0; sIdx < SKILLS.length; sIdx++) {
-              if (SKILLS[sIdx].timer <= 0 && hero.mp >= SKILLS[sIdx].mpCost && Math.random() < dt * 0.9) {
+              if (SKILLS[sIdx].timer <= 0 && hero.mp >= SKILLS[sIdx].mpCost && Math.random() < dt * 0.85) {
                 castCombatSkill(sIdx);
                 break;
               }
@@ -2600,7 +2641,6 @@
         hero.x += dx * Math.min(1, dt * 5.2 * cls.spdBonus);
         hero.y += dy * Math.min(1, dt * 5.2 * cls.spdBonus);
 
-        // Kiểm tra bay xuyên qua Cổng Không Gian Trái / Phải để sang Vùng Đất Mới
         if (hero.portalCooldown <= 0 && (touchJoy.active || kdx !== 0 || kdy !== 0)) {
           const portalY = H * 0.56;
           if (Math.hypot(hero.x - 28, hero.y - portalY) < 30) {
@@ -2621,7 +2661,6 @@
       if (hero.baguaTimer > 0) hero.baguaTimer = Math.max(0, hero.baguaTimer - dt);
       if (hero.cloneTimer > 0) hero.cloneTimer = Math.max(0, hero.cloneTimer - dt);
 
-      // Đồng bộ tọa độ Đa Người Chơi
       syncTimer -= dt;
       if (syncTimer <= 0 && multiChannel) {
         syncTimer = 0.16;
@@ -2637,7 +2676,52 @@
         });
       }
 
-      // 5) Quảng Trường 5 NPC Tông Môn
+      // 5) Vẽ Pháp Trận Bát Quái Cổ Ngữ & Kiếm Mộ dưới mặt đất
+      for (let i = groundMandalas.length - 1; i >= 0; i--) {
+        const gm = groundMandalas[i];
+        gm.life -= dt;
+        if (gm.life <= 0) { groundMandalas.splice(i, 1); continue; }
+        const p = 1 - gm.life / gm.maxLife;
+        const curR = gm.r + (gm.maxR - gm.r) * p;
+        ctx.save();
+        ctx.translate(gm.x, gm.y);
+        ctx.scale(1, 0.42);
+        ctx.rotate(elapsed * 2.5);
+        ctx.strokeStyle = gm.color;
+        ctx.globalAlpha = Math.max(0, gm.life / gm.maxLife);
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, 0, curR, 0, Math.PI * 2); ctx.stroke();
+        ctx.font = 'bold 14px serif';
+        ctx.fillStyle = gm.color;
+        ctx.textAlign = 'center';
+        BAGUA_RUNES.forEach((rune, idx) => {
+          const ra = (idx * Math.PI * 2) / 8;
+          ctx.fillText(rune, Math.cos(ra) * (curR - 12), Math.sin(ra) * (curR - 12));
+        });
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
+      for (let i = swordGraves.length - 1; i >= 0; i--) {
+        const sg = swordGraves[i];
+        sg.life -= dt;
+        if (sg.life <= 0) { swordGraves.splice(i, 1); continue; }
+        ctx.save();
+        ctx.translate(sg.x, sg.y);
+        ctx.globalAlpha = Math.min(1, sg.life);
+        ctx.strokeStyle = sg.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -22);
+        ctx.moveTo(-6, -15);
+        ctx.lineTo(6, -15);
+        ctx.stroke();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
+      // 6) Quảng Trường 5 NPC
       if (combatMode === 'sect') {
         SECT_NPCS.forEach((npc, idx) => {
           const nx = W * npc.xRatio;
@@ -2650,7 +2734,7 @@
         });
       }
 
-      // 6) Đạo Hữu AI Online & Người chơi từ Tab khác
+      // 7) Đạo Hữu AI Online & Tab khác
       onlinePeers.forEach((p, idx) => {
         p.angle += dt * (0.72 + idx * 0.12);
         p.x = W * (0.22 + idx * 0.18) + Math.cos(p.angle) * 45;
@@ -2664,14 +2748,14 @@
           ctx.fillStyle = '#fde047';
           ctx.textAlign = 'center';
           ctx.fillText(`💬 "${p.chatBubble}"`, p.x, p.y - 54);
-        } else if (Math.random() < dt * 0.06) {
+        } else if (Math.random() < dt * 0.05) {
           p.chatBubble = peerQuotes[Math.floor(Math.random() * peerQuotes.length)];
           p.chatTimer = 3.5;
         }
 
         p.shootCd -= dt;
         if (p.shootCd <= 0 && enemies.length > 0 && combatMode !== 'sect') {
-          p.shootCd = 0.6;
+          p.shootCd = 0.65;
           const target = enemies[idx % enemies.length];
           const ang = Math.atan2(target.y - p.y, target.x - p.x);
           const pDmg = Math.round(getBaseDamage() * 0.42);
@@ -2679,12 +2763,13 @@
           heroBullets.push({
             x: p.x,
             y: p.y - 10,
-            vx: Math.cos(ang) * 520,
-            vy: Math.sin(ang) * 520,
+            vx: Math.cos(ang) * 540,
+            vy: Math.sin(ang) * 540,
             dmg: pDmg,
             color: '#38bdf8',
-            r: 3.5,
+            r: 4,
             pierce: 1,
+            style: 'sword',
             fromPeer: true,
             life: 1.2
           });
@@ -2692,14 +2777,11 @@
       });
 
       remoteTabPlayers.forEach((rp, key) => {
-        if (now - rp.lastSeen > 4000) {
-          remoteTabPlayers.delete(key);
-          return;
-        }
+        if (now - rp.lastSeen > 4000) { remoteTabPlayers.delete(key); return; }
         drawCultivatorByRealmTier(ctx, rp.x * W, rp.y * H, rp.facing, rp.realmTier || 0, rp.mount || 'laptop', `🟢 ${rp.name}`, elapsed, false, true, false);
       });
 
-      // 7) Đòn bắn thường của Nhân vật chính
+      // 8) Đòn đánh thường Tiên Hiệp (Bán Nguyệt Kiếm Khí / Phi Kiếm / Phù Lục)
       hero.shootTimer -= dt;
       if (!hero.isDead && hero.shootTimer <= 0 && enemies.length > 0 && combatMode !== 'sect') {
         hero.shootTimer = cls.fireRate;
@@ -2713,31 +2795,53 @@
         const dmg = getBaseDamage();
 
         const offsets = state.classId === 'pentest' ? [-0.16, 0, 0.16] : [0];
+        const projStyle = state.classId === 'backend' ? 'crescent' : state.classId === 'ai' ? 'talisman' : 'sword';
         offsets.forEach((off) => {
           heroBullets.push({
             x: hero.x,
             y: hero.y - 12,
-            vx: Math.cos(baseAngle + off) * 580,
-            vy: Math.sin(baseAngle + off) * 580,
+            vx: Math.cos(baseAngle + off) * 600,
+            vy: Math.sin(baseAngle + off) * 600,
             dmg: offsets.length > 1 ? dmg * 0.72 : dmg,
             color: skin.bullet || zone.uiSecondary,
             r: 5,
             pierce: state.classId === 'backend' ? 3 : 1,
+            style: projStyle,
             critChance: 0.3,
             life: 1.4
           });
         });
-        audio.playShoot(540);
+        audio.playSwordChant(540);
       }
 
-      // 8) Vẽ Nhân Vật Chính & Phân Thân
+      // 9) Nhất Khí Hóa Tam Thanh (Dây xích Đại Đạo nối 3 Tiên Đạo Pháp Thân) & Tia Tiên Quang
       if (hero.cloneTimer > 0 && !hero.isDead) {
+        const cloneTitles = ['Ngọc Thanh', 'Thượng Thanh', 'Thái Thanh'];
         for (let c = 0; c < 3; c++) {
           const ca = elapsed * 2.6 + (c * Math.PI * 2) / 3;
-          drawCultivatorByRealmTier(ctx, hero.x + Math.cos(ca) * 52, hero.y + Math.sin(ca) * 26, hero.facing, state.realmIndex, state.currentMount, '', elapsed, true, false, false);
+          const cx = hero.x + Math.cos(ca) * 58;
+          const cy = hero.y + Math.sin(ca) * 28;
+          ctx.strokeStyle = 'rgba(253, 224, 71, 0.55)';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath(); ctx.moveTo(hero.x, hero.y - 12); ctx.lineTo(cx, cy - 12); ctx.stroke();
+          drawCultivatorByRealmTier(ctx, cx, cy, hero.facing, state.realmIndex, state.currentMount, cloneTitles[c], elapsed, true, false, false);
         }
       }
 
+      for (let i = immortalBeams.length - 1; i >= 0; i--) {
+        const bm = immortalBeams[i];
+        bm.life -= dt;
+        if (bm.life <= 0) { immortalBeams.splice(i, 1); continue; }
+        ctx.save();
+        ctx.translate(bm.x, bm.y);
+        ctx.rotate(bm.angle);
+        ctx.strokeStyle = bm.color;
+        ctx.lineWidth = 10 * (bm.life / 0.45);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.stroke();
+        ctx.restore();
+      }
+
+      // 10) Vẽ Nhân Vật Chính & 8 Đóa Kim Liên Hộ Thể
       drawCultivatorByRealmTier(
         ctx,
         hero.x,
@@ -2752,6 +2856,21 @@
         true
       );
 
+      for (let i = goldenLotuses.length - 1; i >= 0; i--) {
+        const gl = goldenLotuses[i];
+        gl.life -= dt;
+        if (gl.life <= 0) { goldenLotuses.splice(i, 1); continue; }
+        const la = elapsed * 3.5 + gl.angle;
+        const lx = hero.x + Math.cos(la) * 62;
+        const ly = hero.y - 6 + Math.sin(la) * 28;
+        ctx.font = '15px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🪷', lx, ly);
+        enemies.forEach((e) => {
+          if (Math.hypot(e.x - lx, e.y - ly) < e.r + 22) dealDamageToEnemy(e, gl.dmg * dt * 3, false);
+        });
+      }
+
       hero.orbitWeapons.forEach((ow) => {
         const a = elapsed * 3.2 + ow.angle;
         const ox = hero.x + Math.cos(a) * 42;
@@ -2761,7 +2880,7 @@
         ctx.fillText(ow.icon, ox, oy + 3);
       });
 
-      // 9) Vòng Cảnh Báo Đỏ (Red Zone) của Boss
+      // 11) Vòng Cảnh Báo Đỏ (Red Zone) của Boss
       for (let i = redTelegraphs.length - 1; i >= 0; i--) {
         const tg = redTelegraphs[i];
         tg.timer -= dt;
@@ -2770,22 +2889,17 @@
         ctx.strokeStyle = 'rgba(244, 63, 94, 0.92)';
         ctx.fillStyle = `rgba(225, 29, 72, ${0.15 + progress * 0.30})`;
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(tg.x, tg.y, tg.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(tg.x, tg.y, tg.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
         ctx.restore();
 
         if (tg.timer <= 0) {
           audio.playThunder();
-          if (Math.hypot(hero.x - tg.x, hero.y - tg.y) < tg.r) {
-            applyDamageToHero(tg.dmg);
-          }
+          if (Math.hypot(hero.x - tg.x, hero.y - tg.y) < tg.r) applyDamageToHero(tg.dmg);
           redTelegraphs.splice(i, 1);
         }
       }
 
-      // 10) Hố Đen & Song Long
+      // 12) Lục Đạo Luân Hồi Bàn (6 chữ Kanji + Vết Nứt Không Gian) & Băng Hỏa Chân Long 18 đốt
       for (let i = blackHoles.length - 1; i >= 0; i--) {
         const bh = blackHoles[i];
         bh.life -= dt;
@@ -2793,17 +2907,26 @@
         if (bh.life <= 0) { blackHoles.splice(i, 1); continue; }
         ctx.save();
         ctx.translate(bh.x, bh.y);
-        ctx.rotate(elapsed * 6);
+        ctx.rotate(elapsed * 2.5);
         ctx.strokeStyle = '#f43f5e';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(0, 0, bh.r, 0, Math.PI * 2); ctx.stroke();
+        SIX_PATHS_KANJI.forEach((kj, idx) => {
+          const ka = (idx * Math.PI * 2) / 6;
+          ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(ka) * bh.r, Math.sin(ka) * bh.r); ctx.stroke();
+          ctx.font = 'bold 14px serif';
+          ctx.fillStyle = '#fde047';
+          ctx.textAlign = 'center';
+          ctx.fillText(kj, Math.cos(ka) * (bh.r - 14), Math.sin(ka) * (bh.r - 14));
+        });
         ctx.restore();
+
         enemies.forEach((e) => {
           const bdx = bh.x - e.x, bdy = bh.y - e.y;
           const dist = Math.max(10, Math.hypot(bdx, bdy));
-          e.x += (bdx / dist) * 150 * dt;
-          e.y += (bdy / dist) * 150 * dt;
-          if (bh.tickTimer <= 0 && dist < bh.r * 1.8) dealDamageToEnemy(e, bh.dmg, true);
+          e.x += (bdx / dist) * 165 * dt;
+          e.y += (bdy / dist) * 165 * dt;
+          if (bh.tickTimer <= 0 && dist < bh.r * 1.9) dealDamageToEnemy(e, bh.dmg, true);
         });
         if (bh.tickTimer <= 0) bh.tickTimer = 0.35;
       }
@@ -2811,20 +2934,59 @@
       for (let i = dragons.length - 1; i >= 0; i--) {
         const dr = dragons[i];
         dr.x += dr.vx * dt;
-        if (dr.x > W + 100) { dragons.splice(i, 1); continue; }
-        const dyWave = dr.y + Math.sin(elapsed * 10 + dr.phase) * 32;
-        for (let seg = 0; seg < 6; seg++) {
-          ctx.fillStyle = dr.color;
+        if (dr.x > W + 180) { dragons.splice(i, 1); continue; }
+        const dyWave = dr.y + Math.sin(elapsed * 10 + dr.phase) * 34;
+        for (let seg = 17; seg >= 0; seg--) {
+          const sx = dr.x - seg * 11;
+          const sy = dyWave + Math.sin(elapsed * 10 - seg * 0.35 + dr.phase) * 18;
+          ctx.fillStyle = seg === 0 ? (dr.headColor || '#fde047') : dr.color;
           ctx.beginPath();
-          ctx.arc(dr.x - seg * 14, dyWave + Math.sin(elapsed * 10 - seg * 0.4) * 16, 10 - seg, 0, Math.PI * 2);
+          ctx.arc(sx, sy, Math.max(4, 13 - seg * 0.45), 0, Math.PI * 2);
           ctx.fill();
+          if (seg === 0) {
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy - 6); ctx.lineTo(sx - 10, sy - 18);
+            ctx.moveTo(sx + 6, sy + 2); ctx.lineTo(sx + 20, sy + 10);
+            ctx.stroke();
+          }
         }
         enemies.forEach((e) => {
-          if (Math.hypot(e.x - dr.x, e.y - dyWave) < e.r + 30) dealDamageToEnemy(e, dr.dmg * dt * 4, true);
+          if (Math.hypot(e.x - dr.x, e.y - dyWave) < e.r + 36) dealDamageToEnemy(e, dr.dmg * dt * 4, true);
         });
       }
 
-      // 11) Sinh quái & Cập nhật Quái / Boss / PvP (Quái bắn đạn thật & gây sát thương chuẩn)
+      // 13) TIÊN ĐẾ TRẤN THIÊN CHƯỞNG ([Phím R]) giáng từ tầng mây
+      for (let i = heavenlyPalms.length - 1; i >= 0; i--) {
+        const hp = heavenlyPalms[i];
+        hp.life -= dt;
+        if (hp.life <= 0) { heavenlyPalms.splice(i, 1); continue; }
+        if (!hp.impacted) {
+          hp.curY += (hp.y - hp.curY) * Math.min(1, dt * 12);
+          if (Math.abs(hp.y - hp.curY) < 12) {
+            hp.impacted = true;
+            enemies.forEach((e) => dealDamageToEnemy(e, hp.dmg, true));
+          }
+        }
+        ctx.save();
+        ctx.translate(hp.x, hp.curY);
+        ctx.globalAlpha = Math.min(1, hp.life * 0.9);
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.38)';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 3.5;
+        drawRoundRect(ctx, -48, -56, 96, 112, 26);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = 'bold 42px serif';
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.fillText('卍', 0, 14);
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
+      // 14) Sinh quái & Cập nhật Quái / Boss / PvP
       spawnTimer -= dt;
       if (spawnTimer <= 0 && combatMode === 'wave') {
         spawnTimer = 0.95;
@@ -2886,7 +3048,6 @@
           e.x += (edx / edist) * e.spd * dt;
           e.y += (edy / edist) * e.spd * dt;
 
-          // Quái thường bắn đạn về phía người chơi
           if (e.shooter) {
             e.shootCd -= dt;
             if (e.shootCd <= 0 && !hero.isDead) {
@@ -2905,7 +3066,6 @@
             }
           }
 
-          // Húc cận chiến
           if (edist < e.r + 16 && !hero.isDead) {
             applyDamageToHero((e.atk || 35) * dt * 1.4, e);
           }
@@ -2931,25 +3091,33 @@
         }
       }
 
-      // 12) Đạn người chơi & Đạn địch
+      // 15) Đạn Tiên Hiệp của Người chơi & Đạn Địch
       for (let i = heroBullets.length - 1; i >= 0; i--) {
         const b = heroBullets[i];
         b.life -= dt;
         b.x += b.vx * dt;
         b.y += b.vy * dt;
         if (b.life <= 0 || b.x < -40 || b.x > W + 40 || b.y < -40 || b.y > H + 40) {
+          if (b.leaveGrave && b.y > H * 0.42 && b.y < H * 0.88 && swordGraves.length < 24) {
+            swordGraves.push({ x: b.x, y: b.y, color: b.color, life: 2.5 });
+          }
           heroBullets.splice(i, 1);
           continue;
         }
-        ctx.fillStyle = b.color;
-        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+        drawXianxiaProjectile(ctx, b, elapsed);
 
         for (let j = enemies.length - 1; j >= 0; j--) {
           const e = enemies[j];
           if (Math.hypot(e.x - b.x, e.y - b.y) < e.r + b.r + 3) {
             dealDamageToEnemy(e, b.dmg, Math.random() < (b.critChance || 0.2), b.fromPeer);
             b.pierce--;
-            if (b.pierce <= 0) { heroBullets.splice(i, 1); break; }
+            if (b.pierce <= 0) {
+              if (b.leaveGrave && swordGraves.length < 24) {
+                swordGraves.push({ x: b.x, y: b.y, color: b.color, life: 2.5 });
+              }
+              heroBullets.splice(i, 1);
+              break;
+            }
           }
         }
       }
@@ -2971,7 +3139,7 @@
         }
       }
 
-      // 13) Hút Linh Thạch & Sấm sét Độ Kiếp
+      // 16) Hút Linh Thạch & Sấm sét Độ Kiếp
       for (let i = lootGems.length - 1; i >= 0; i--) {
         const g = lootGems[i];
         const gdx = hero.x - g.x, gdy = hero.y - g.y;
@@ -3032,16 +3200,12 @@
       }
       ctx.globalAlpha = 1;
 
-      // 14) Vẽ Floating Touch Joystick khi người chơi chạm kéo trên màn hình
       if (touchJoy.active) {
         ctx.save();
         ctx.strokeStyle = 'rgba(94, 234, 212, 0.55)';
         ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(touchJoy.startX, touchJoy.startY, touchJoy.maxR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(touchJoy.startX, touchJoy.startY, touchJoy.maxR, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
         ctx.fillStyle = 'rgba(45, 212, 191, 0.85)';
         ctx.beginPath();
@@ -3064,7 +3228,7 @@
     }
 
     // =========================================================================
-    // PHẦN 15: RENDER MODAL 7 ĐẠI VÙNG ĐẤT, 7 CẢNH GIỚI & CÀN KHÔN TÚI
+    // 11. RENDER MODALS & SỰ KIỆN NÚT BẤM
     // =========================================================================
     function renderZonesModal() {
       const box = document.getElementById('zones-grid-list');
@@ -3090,29 +3254,11 @@
 
       box.querySelectorAll('.goto-zone-btn').forEach((btn) => {
         btn.addEventListener('click', () => {
-          const targetIdx = Number(btn.dataset.gotoZone);
           document.getElementById('modal-zones').classList.add('hidden');
-          travelToZone(targetIdx, true);
+          travelToZone(Number(btn.dataset.gotoZone), true);
         });
       });
     }
-
-    document.getElementById('btn-open-zones').addEventListener('click', () => {
-      renderZonesModal();
-      document.getElementById('modal-zones').classList.remove('hidden');
-    });
-
-    document.getElementById('btn-next-zone-quick').addEventListener('click', () => {
-      travelToZone(state.zoneIndex + 1, true);
-    });
-
-    document.getElementById('btn-story-tracker').addEventListener('click', () => {
-      openHubWithTab('story');
-    });
-
-    document.getElementById('btn-open-skins').addEventListener('click', () => {
-      openHubWithTab('skins');
-    });
 
     function renderRealmsPreviewModal() {
       const cur = getCurrentRealm();
@@ -3141,40 +3287,9 @@
       }).join('');
 
       list.querySelectorAll('.try-realm-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          triggerBreakthroughToRealm(Number(btn.dataset.tryRealm));
-        });
+        btn.addEventListener('click', () => triggerBreakthroughToRealm(Number(btn.dataset.tryRealm)));
       });
     }
-
-    document.getElementById('btn-open-realm-preview').addEventListener('click', () => {
-      renderRealmsPreviewModal();
-      document.getElementById('modal-realms').classList.remove('hidden');
-    });
-
-    document.getElementById('btn-inject-qi').addEventListener('click', () => {
-      addQi(5000, '💎 Thiên Đạo Ban Phúc');
-      renderRealmsPreviewModal();
-    });
-
-    document.getElementById('btn-modal-breakthrough').addEventListener('click', () => {
-      if (state.realmIndex >= REALMS.length - 1) {
-        triggerBreakthroughToRealm(0);
-      } else {
-        triggerBreakthroughToRealm(state.realmIndex + 1);
-      }
-    });
-
-    document.getElementById('btn-tribulation-top').addEventListener('click', () => {
-      const curRealm = getCurrentRealm();
-      if (state.qi >= curRealm.req && state.realmIndex < REALMS.length - 1) {
-        state.qi -= curRealm.req;
-        triggerBreakthroughToRealm(state.realmIndex + 1);
-      } else {
-        renderRealmsPreviewModal();
-        document.getElementById('modal-realms').classList.remove('hidden');
-      }
-    });
 
     function openHubWithTab(tabName) {
       document.getElementById('modal-hub').classList.remove('hidden');
@@ -3184,11 +3299,7 @@
       renderHubTab(tabName);
     }
 
-    document.getElementById('btn-open-hub').addEventListener('click', () => openHubWithTab('story'));
-    document.querySelectorAll('.hub-tab-btn').forEach((btn) => {
-      btn.addEventListener('click', () => openHubWithTab(btn.dataset.hubTab));
-    });
-
+    let currentQuizIdx = 0;
     function renderHubTab(tab) {
       const box = document.getElementById('hub-tab-content');
 
@@ -3384,6 +3495,7 @@
       }
 
       if (tab === 'scriptures') {
+        const qItem = IT_QUIZ_QUESTIONS[currentQuizIdx % IT_QUIZ_QUESTIONS.length];
         const tips = [
           '🖧 Infra #01 • Multi-AZ High Availability: Triển khai ít nhất 2 node trên 2 AZ độc lập để chống SPOF.',
           '🖧 Infra #02 • Sao lưu 3-2-1: 3 bản dữ liệu, 2 phương tiện lưu trữ, 1 bản Offsite bất biến.',
@@ -3394,12 +3506,26 @@
         ];
         box.innerHTML = `
           <div class="flex flex-wrap gap-2 mb-2">
-            <button id="hub-wooden-fish" class="gold-btn px-3.5 py-2 rounded-xl font-extrabold text-xs">🪵 Gõ Mõ (+25 Tu Vi &amp; Đầy HP/MP)</button>
+            <button id="hub-wooden-fish" class="gold-btn px-3.5 py-2 rounded-xl font-extrabold text-xs">🪵 Gõ Mõ Tĩnh Tâm (+25 Tu Vi &amp; Đầy HP/MP)</button>
             <button id="hub-oracle-btn" class="jade-btn px-3.5 py-2 rounded-xl font-extrabold text-xs">🎋 Xin Quẻ Đầu Năm (+30 Tu Vi)</button>
           </div>
           <div id="hub-oracle-text" class="p-2.5 rounded-xl bg-amber-950/60 border border-amber-400/50 text-amber-200 text-center font-semibold mb-2">
             "${state.lastOracle}" (Mang tính giải trí)
           </div>
+
+          <div class="p-3 rounded-2xl bg-slate-900/95 border border-teal-400/50 space-y-2 mb-2">
+            <div class="font-extrabold text-teal-300 text-xs">🎯 Giải Tình Huống Hạ Tầng / Security / Policy (+120 Tu Vi):</div>
+            <div class="font-semibold text-white text-xs">${qItem.q}</div>
+            <div class="space-y-1">
+              ${qItem.opts.map((opt, oIdx) => `
+                <button data-ans="${oIdx}" class="quiz-opt-btn realm-btn w-full text-left px-3 py-1.5 rounded-xl text-[11px] font-semibold">
+                  ${opt}
+                </button>
+              `).join('')}
+            </div>
+            <div id="quiz-feedback" class="text-[11px] text-amber-200 font-bold"></div>
+          </div>
+
           <div class="space-y-1.5">
             ${tips.map((t) => `<div class="p-2 rounded-xl bg-slate-900 border border-slate-700">${t}</div>`).join('')}
           </div>
@@ -3419,6 +3545,22 @@
           document.getElementById('hub-oracle-text').textContent = `"${state.lastOracle}" (Mang tính giải trí)`;
           audio.playBell();
           addQi(30, '🎋 Xin Quẻ');
+        });
+        box.querySelectorAll('.quiz-opt-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const pick = Number(btn.dataset.ans);
+            const fb = document.getElementById('quiz-feedback');
+            if (pick === qItem.ans) {
+              audio.playBell();
+              addQi(120, '🎯 Đắc Đạo IT');
+              fb.textContent = `✅ Chính xác! ${qItem.explain}`;
+              currentQuizIdx++;
+              setTimeout(() => renderHubTab('scriptures'), 1100);
+            } else {
+              audio.playHitHurt();
+              fb.textContent = `❌ Chưa chuẩn rồi, hãy thử suy ngẫm lại theo nguyên tắc Least Privilege / Secure Coding nhé!`;
+            }
+          });
         });
         return;
       }
@@ -3459,7 +3601,7 @@
     }
 
     // =========================================================================
-    // PHẦN 16: KHỞI TẠO SỰ KIỆN GIAO DIỆN & BẮT ĐẦU GAME
+    // 12. KẾT NỐI TOÀN BỘ SỰ KIỆN GIAO DIỆN & KHỞI CHẠY NGAY LẬP TỨC
     // =========================================================================
     function renderWelcomeClasses() {
       const grid = document.getElementById('welcome-class-grid');
@@ -3483,10 +3625,51 @@
     hero.shield = hero.maxShield;
     hero.mp = hero.maxMp;
 
+    document.getElementById('btn-open-zones').addEventListener('click', () => {
+      renderZonesModal();
+      document.getElementById('modal-zones').classList.remove('hidden');
+    });
+    document.getElementById('btn-next-zone-quick').addEventListener('click', () => travelToZone(state.zoneIndex + 1, true));
+    document.getElementById('btn-story-tracker').addEventListener('click', () => openHubWithTab('story'));
+    document.getElementById('btn-open-skins').addEventListener('click', () => openHubWithTab('skins'));
+    document.getElementById('btn-open-hub').addEventListener('click', () => openHubWithTab('story'));
+
+    document.querySelectorAll('.hub-tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => openHubWithTab(btn.dataset.hubTab));
+    });
+
+    document.getElementById('btn-open-realm-preview').addEventListener('click', () => {
+      renderRealmsPreviewModal();
+      document.getElementById('modal-realms').classList.remove('hidden');
+    });
+
+    document.getElementById('btn-inject-qi').addEventListener('click', () => {
+      addQi(5000, '💎 Thiên Đạo Ban Phúc');
+      renderRealmsPreviewModal();
+    });
+
+    document.getElementById('btn-modal-breakthrough').addEventListener('click', () => {
+      if (state.realmIndex >= REALMS.length - 1) triggerBreakthroughToRealm(0);
+      else triggerBreakthroughToRealm(state.realmIndex + 1);
+    });
+
+    document.getElementById('btn-tribulation-top').addEventListener('click', () => {
+      const curRealm = getCurrentRealm();
+      if (state.qi >= curRealm.req && state.realmIndex < REALMS.length - 1) {
+        state.qi -= curRealm.req;
+        triggerBreakthroughToRealm(state.realmIndex + 1);
+      } else {
+        renderRealmsPreviewModal();
+        document.getElementById('modal-realms').classList.remove('hidden');
+      }
+    });
+
     document.querySelectorAll('.skill-slot[data-skill]').forEach((btn) => {
       btn.addEventListener('click', () => castCombatSkill(Number(btn.dataset.skill)));
     });
     document.getElementById('btn-dash-skill').addEventListener('click', triggerHeroDash);
+    document.getElementById('btn-potion-heal').addEventListener('click', useHealPotion);
+    document.getElementById('btn-potion-mana').addEventListener('click', useManaPotion);
 
     document.querySelectorAll('.combat-mode-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -3528,15 +3711,8 @@
       socialDrawer.classList.add('hidden');
     });
 
-    function appendChatMessage(sender, text) {
-      const log = document.getElementById('world-chat-log');
-      const div = document.createElement('div');
-      div.innerHTML = `<b class="text-amber-300">${sender}:</b> <span class="text-slate-200">${text}</span>`;
-      log.appendChild(div);
-      log.scrollTop = log.scrollHeight;
-    }
-    appendChatMessage('Hàn Lập [+15]', 'Bấm nút 🗺️ Đổi Vùng ở trên đỉnh màn hình để ngắm 7 vùng đất mới nhé!');
-    appendChatMessage('Tiêu Viêm [+14]', 'Cẩn thận đạn Boss bắn trúng là tụt HP phải chờ 5s hồi sinh đó!');
+    appendChatMessage('Hàn Lập [+15]', 'Bấm [R] để triệu hồi Pháp Tướng Thiên Địa & Tiên Đế Trấn Thiên Chưởng!');
+    appendChatMessage('Tiêu Viêm [+14]', 'Bấm 🗺️ Đổi Vùng ở trên đỉnh màn hình để bay qua 7 vùng đất mới nhé!');
 
     document.getElementById('btn-send-chat').addEventListener('click', () => {
       const inp = document.getElementById('chat-input');
@@ -3553,12 +3729,15 @@
         ...onlinePeers.map((p) => ({ name: p.name, dmg: p.dmgDone }))
       ].sort((a, b) => b.dmg - a.dmg).slice(0, 4);
 
-      document.getElementById('dps-meter-list').innerHTML = rows.map((r, i) => `
-        <div class="flex justify-between">
-          <span class="truncate max-w-[160px]">#${i + 1} ${r.name}</span>
-          <span class="text-teal-300">${r.dmg.toLocaleString()}</span>
-        </div>
-      `).join('');
+      const listEl = document.getElementById('dps-meter-list');
+      if (listEl) {
+        listEl.innerHTML = rows.map((r, i) => `
+          <div class="flex justify-between">
+            <span class="truncate max-w-[160px]">#${i + 1} ${r.name}</span>
+            <span class="text-teal-300">${r.dmg.toLocaleString()}</span>
+          </div>
+        `).join('');
+      }
     }
     setInterval(updateDpsLeaderboardUI, 1500);
 
